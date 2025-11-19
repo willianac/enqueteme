@@ -1,5 +1,7 @@
 package com.will.enqueteme.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,12 +23,13 @@ public class Opcao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nome;
+    private String name;
 
-    @Column(name = "qtde_votos")
-    private Long votos;
+    @Column(name = "qtde_votos", columnDefinition = "BIGINT DEFAULT 0")
+    private Long votes = 0L;
 
     @ManyToOne
     @JoinColumn(name = "enquete_id")
+    @JsonIgnore
     private Enquete enquete;
 }
