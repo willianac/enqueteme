@@ -1,12 +1,15 @@
 package com.will.enqueteme.models;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -20,6 +23,7 @@ import jakarta.persistence.FetchType;
 
 @Entity
 @Table(name = "enquetes")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 public class Enquete {
@@ -30,10 +34,10 @@ public class Enquete {
     private String title;
 
     @CreatedDate
-    private String createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
-    private String updatedAt;
+    private Instant updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
