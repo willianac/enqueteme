@@ -1,15 +1,15 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+/web/dist
+/web/tmp
+/web/out-tsc
+/web/bazel-out
 
 # Node
-/node_modules
-npm-debug.log
-yarn-error.log
+/web/node_modules
+/web/npm-debug.log
+/web/yarn-error.log
 
 # Visual Studio Code
 .vscode/*
@@ -20,7 +20,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/web/.angular/cache
 .sass-cache/
 /connect.lock
 /coverage
@@ -35,11 +35,11 @@ Thumbs.db
 
 #--JAVA--##
 
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+/api/HELP.md
+/api/target/
+/api/.mvn/wrapper/maven-wrapper.jar
+/api/!**/src/main/**/target/
+/api/!**/src/test/**/target/
 
 ### STS ###
 .apt_generated
