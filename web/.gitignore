@@ -50,4 +50,4 @@ target/
 .springBeans
 .sts4-cache
 
-/api/src/main/resources/application.properties
+/src/main/resources/application.properties
