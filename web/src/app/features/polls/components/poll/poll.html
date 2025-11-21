@@ -1,0 +1,65 @@
+<div class="poll-wrapper">
+  	<div tuiPlatform="web">
+ 
+    <div
+        tuiAppearance="floating"
+        tuiCardLarge
+        class="poll-card"
+        tuiTheme="dark"
+    >
+        <header tuiHeader>
+            <h2 tuiTitle class="title">Qual é a melhor faixa de Fallen, álbum estreante do Evanescence?</h2>
+        </header>
+ 
+        <section>
+          <form [formGroup]="testForm">
+            <label tuiLabel class="option">
+                <input
+                    formControlName="testValue1"
+                    tuiCheckbox
+                    type="checkbox"
+                />
+                
+                <span tuiTitle>
+                    Imaginary
+                </span>
+            </label>
+
+            <label tuiLabel class="option">
+                <input
+                    formControlName="testValue2"
+                    tuiCheckbox
+                    type="checkbox"
+                />
+                
+                <span tuiTitle>
+                    Haunted
+                </span>
+            </label>
+
+            <label tuiLabel class="option">
+                <input
+                    formControlName="testValue3"
+                    tuiCheckbox
+                    type="checkbox"
+                />
+                
+                <span tuiTitle>
+                    Bring me to life
+                </span>
+            </label>
+          </form>
+        </section>
+ 
+        <footer>
+            <button
+                appearance="secondary"
+                size="m"
+                tuiButton
+                type="button"
+            >
+                Label
+            </button>
+        </footer>
+    </div>
+</div>
