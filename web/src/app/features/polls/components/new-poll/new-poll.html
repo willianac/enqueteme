@@ -13,23 +13,32 @@
           </div>
 
           <div class="add-options">
-            <div class="option-wrapper">
-              <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
-                <input tuiTextfield placeholder="Opcao 1" />
-              </tui-textfield>
-              <div class="remove-btn">
-                <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
+            <form [formGroup]="newPollForm">
+              @for (option of getOptionsKeys() ; track option) {
+              <div class="option-wrapper">
+                <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
+                  <input
+                    tuiTextfield
+                    placeholder="Opção {{ $index + 1 }}"
+                    [formControlName]="option"
+                  />
+                </tui-textfield>
+                <div class="remove-btn">
+                  @if ($index > 1) {
+                    <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
+                  }
+                </div>
               </div>
-            </div>
-            <div class="option-wrapper">
-              <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
-                <input tuiTextfield placeholder="Opcao 2" />
-              </tui-textfield>
-              <div class="remove-btn">
-                <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
-              </div>
-            </div>
-            <button tuiButton size="s" class="add-option-btn" type="button" appearance="outline">
+              }
+            </form>
+            <button
+              tuiButton
+              size="s"
+              (click)="addOption()"
+              class="add-option-btn"
+              type="button"
+              appearance="outline"
+            >
               Adicionar opção
             </button>
           </div>
