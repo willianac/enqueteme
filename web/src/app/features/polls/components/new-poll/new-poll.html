@@ -1,0 +1,44 @@
+<app-navbar></app-navbar>
+
+<main class="content">
+  <h1 class="title">Criar uma nova enquete</h1>
+  <div class="new-poll-form">
+    <div tuiPlatform="web">
+      <div tuiCardLarge tuiTheme="dark">
+        <section>
+          <div>
+            <tui-textfield tuiTextfieldSize="l">
+              <input placeholder="Dê um nome a sua enquete" tuiTextfield />
+            </tui-textfield>
+          </div>
+
+          <div class="add-options">
+            <div class="option-wrapper">
+              <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
+                <input tuiTextfield placeholder="Opcao 1" />
+              </tui-textfield>
+              <div class="remove-btn">
+                <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
+              </div>
+            </div>
+            <div class="option-wrapper">
+              <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
+                <input tuiTextfield placeholder="Opcao 2" />
+              </tui-textfield>
+              <div class="remove-btn">
+                <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
+              </div>
+            </div>
+            <button tuiButton size="s" class="add-option-btn" type="button" appearance="outline">
+              Adicionar opção
+            </button>
+          </div>
+        </section>
+
+        <footer>
+          <button tuiButton appearance="primary" size="m">Criar enquete</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</main>

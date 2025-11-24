@@ -1,0 +1,45 @@
+.content {
+  width: 70%;
+  margin: auto;
+}
+
+.title {
+  color: white;
+  font-size: 30px;
+  margin-top: 2rem;
+}
+
+.new-poll-form {
+  width: 50%;
+  margin: auto;
+  margin-top: 5rem;
+
+  .add-options {
+    margin-top: 2rem;
+    padding: 1rem;
+    outline: 1px solid #7a7a7a;
+    border-radius: 12px;
+
+    .option-wrapper {
+      display: flex;
+      column-gap: 12px;
+
+      .remove-btn {
+        width: fit-content
+      }
+
+      .input {
+        flex: 1;
+      }
+
+      &:not(:last-child) {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
