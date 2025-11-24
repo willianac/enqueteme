@@ -2,10 +2,28 @@
 <main class="content">
   <div class="poll-list">
     <div class="poll">
-      <app-poll></app-poll>
+      <app-poll
+        [daysRemaining]="2"
+        [totalVotes]="150"
+        title="Qual a sua música favorita da Evanescence?"
+        [options]="['Bring Me To Life', 'My Immortal', 'Imaginary', 'Lithium']"
+      ></app-poll>
     </div>
     <div class="poll">
-      <app-poll></app-poll>
+      <app-poll
+        [daysRemaining]="5"
+        [totalVotes]="99"
+        title="Qual a melhor arma do CSGO?"
+        [options]="['AK-47', 'M4A1', 'AWP', 'Desert Eagle']"
+      ></app-poll>
+    </div>
+    <div class="poll">
+      <app-poll
+        [daysRemaining]="1"
+        [totalVotes]="250"
+        title="Qual o melhor super-herói da Marvel?"
+        [options]="['Homem-Aranha', 'Capitão América', 'Homem de Ferro', 'Thor']"
+      ></app-poll>
     </div>
   </div>
 </main>

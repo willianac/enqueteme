@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiLabel, TuiTitle} from '@taiga-ui/core';
-import { TuiPin, TuiProgress, TuiProgressLabel, TuiRadio } from '@taiga-ui/kit';
+import { TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-poll',
@@ -18,12 +19,18 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
     ReactiveFormsModule, 
     TuiRadio, 
     TuiPin, 
-    TuiProgress
+    TuiProgress,
+    CommonModule
   ],
   templateUrl: './poll.html',
   styleUrl: './poll.less',
 })
 export class Poll {
+  @Input({ required: true }) title!: string
+  @Input({ required: true }) options!: string[]
+  @Input({ required: true }) totalVotes!: number
+  @Input({ required: true }) daysRemaining!: number
+
   protected pollForm = new FormGroup({
     option: new FormControl(false)
   });

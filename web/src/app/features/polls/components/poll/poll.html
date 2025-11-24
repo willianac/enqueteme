@@ -3,13 +3,13 @@
     <div tuiAppearance="floating" tuiCardLarge class="poll-card" tuiTheme="dark">
       <header tuiHeader>
         <h2 tuiTitle class="title">
-          Qual é a melhor faixa de Fallen, álbum estreante do Evanescence?
+          {{title}}
         </h2>
       </header>
 
-      <!-- <section>
+      <section>
         <form [formGroup]="pollForm">
-          <label tuiLabel class="option">
+          <!-- <label tuiLabel class="option">
             <input formControlName="option" size="m" tuiRadio type="radio" value="taiga" />
             <span>Imaginary</span>
           </label>
@@ -22,11 +22,20 @@
           <label tuiLabel class="option">
             <input formControlName="option" size="m" tuiRadio type="radio" value="teste"/>
             <span>Haunted</span>
-          </label>
-        </form>
-      </section> -->
+          </label> -->
 
-      <section class="result">
+            @for (option of options; track $index) {
+            <label tuiLabel class="option">
+                <input formControlName="option" type="radio" tuiRadio [value]="option.toLowerCase()">
+                <span>{{option}}</span>
+            </label>
+        }
+
+        </form>
+
+      </section>
+
+      <!-- <section class="result">
         <div class="option-votes">
           <div class="percentage">
             <span>50%</span>
@@ -90,13 +99,13 @@
             ></progress>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <footer>
         <div class="poll-info">
-          <span class="text-muted">Total de Votos: 56</span>
+          <span class="text-muted">Total de Votos: {{totalVotes}}</span>
           <tui-pin class="pin bg-muted" />
-          <span class="text-muted">10 Dias Restantes</span>
+          <span class="text-muted">{{daysRemaining}} Dias Restantes</span>
         </div>
         <div class="action">
           <button tuiButton size="m">Votar</button>
