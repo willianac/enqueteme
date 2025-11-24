@@ -11,23 +11,30 @@
         <form [formGroup]="pollForm">
           <label tuiLabel class="option">
             <input formControlName="option" size="m" tuiRadio type="radio" value="taiga" />
-            <span>Teste</span>
+            <span>Imaginary</span>
           </label>
 
           <label tuiLabel class="option">
             <input formControlName="option" size="m" tuiRadio type="radio" value="outro" />
-            <span>Outro teste</span>
+            <span>Bring Me To Life</span>
           </label>
 
           <label tuiLabel class="option">
-            <input formControlName="option" size="m" tuiRadio type="radio" value="teste" />
-            <span>Testando mais uma vez</span>
+            <input formControlName="option" size="m" tuiRadio type="radio" value="teste"/>
+            <span>Haunted</span>
           </label>
         </form>
       </section>
 
       <footer>
-        <button appearance="secondary" size="m" tuiButton type="button">Label</button>
+        <div class="poll-info">
+            <span class="text-muted">Total de Votos: 56</span>
+            <tui-pin class="pin bg-muted"/>
+            <span class="text-muted">10 Dias Restantes</span>
+        </div>
+        <div class="action">
+            <button tuiButton size="m">Votar</button>
+        </div>
       </footer>
     </div>
   </div>
