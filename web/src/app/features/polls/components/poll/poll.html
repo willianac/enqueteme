@@ -7,7 +7,7 @@
         </h2>
       </header>
 
-      <section>
+      <!-- <section>
         <form [formGroup]="pollForm">
           <label tuiLabel class="option">
             <input formControlName="option" size="m" tuiRadio type="radio" value="taiga" />
@@ -24,16 +24,82 @@
             <span>Haunted</span>
           </label>
         </form>
+      </section> -->
+
+      <section class="result">
+        <div class="option-votes">
+          <div class="percentage">
+            <span>50%</span>
+          </div>
+          <div class="progress">
+            <strong>Imaginary</strong>
+            <progress
+              size="m"
+              tuiProgressBar
+              [max]="100"
+              [value]="50"
+              [color]="'var(--tui-background-accent-2)'"
+            ></progress>
+          </div>
+        </div>
+
+        <div class="option-votes">
+          <div class="percentage">
+            <span>30%</span>
+          </div>
+          <div class="progress">
+            <strong>Imaginary</strong>
+            <progress
+              size="m"
+              tuiProgressBar
+              [max]="100"
+              [value]="30"
+              [color]="'var(--tui-background-accent-1)'"
+            ></progress>
+          </div>
+        </div>
+
+        <div class="option-votes">
+          <div class="percentage">
+            <span>5%</span>
+          </div>
+          <div class="progress">
+            <strong>My Immortal</strong>
+            <progress
+              size="m"
+              tuiProgressBar
+              [max]="100"
+              [value]="5"
+              [color]="'var(--tui-text-action)'"
+            ></progress>
+          </div>
+        </div>
+
+        <div class="option-votes">
+          <div class="percentage">
+            <span>15%</span>
+          </div>
+          <div class="progress">
+            <strong>Imaginary</strong>
+            <progress
+              size="m"
+              tuiProgressBar
+              [max]="100"
+              [value]="15"
+              [color]="'var(--tui-text-negative-hover)'"
+            ></progress>
+          </div>
+        </div>
       </section>
 
       <footer>
         <div class="poll-info">
-            <span class="text-muted">Total de Votos: 56</span>
-            <tui-pin class="pin bg-muted"/>
-            <span class="text-muted">10 Dias Restantes</span>
+          <span class="text-muted">Total de Votos: 56</span>
+          <tui-pin class="pin bg-muted" />
+          <span class="text-muted">10 Dias Restantes</span>
         </div>
         <div class="action">
-            <button tuiButton size="m">Votar</button>
+          <button tuiButton size="m">Votar</button>
         </div>
       </footer>
     </div>
