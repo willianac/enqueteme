@@ -37,7 +37,13 @@ export class NewPoll {
   }
 
   public getOptionsKeys(): string[] {
-    console.log(Object.keys(this.newPollForm.controls));
     return Object.keys(this.newPollForm.controls);
+  }
+
+  public removeOption(e: string) {
+    if (this.numberOfOptions > 2) {
+      this.newPollForm.removeControl(e);
+      this.numberOfOptions -= 1;
+    }
   }
 }

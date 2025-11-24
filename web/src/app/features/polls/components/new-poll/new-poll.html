@@ -25,7 +25,7 @@
                 </tui-textfield>
                 <div class="remove-btn">
                   @if ($index > 1) {
-                    <button tuiButtonClose tuiIconButton type="button" size="xs">Close</button>
+                    <button tuiButtonClose tuiIconButton type="button" (click)="removeOption(option)" size="xs">Close</button>
                   }
                 </div>
               </div>
