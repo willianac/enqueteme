@@ -44,6 +44,27 @@
       }
     }
   }
+  
+  .poll-settings {
+    margin-top: 1.8rem;
+    display: flex;
+    
+    .left {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      border-right: 1px solid #7a7a7a;
+      padding-right: 1.4rem;
+    }
+
+    .right {
+      padding-left: 1.4rem;
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+    }
+  }
 
   footer {
     display: flex;
@@ -77,4 +98,17 @@
   to {
     opacity: 0;
   }
+}
+
+@import '@taiga-ui/core/styles/taiga-ui-local.less';
+ 
+.ticks-labels {
+    .tui-slider-ticks-labels(m);
+}
+ 
+.tick-label {
+    .button-clear();
+ 
+    outline: 0;
+    cursor: pointer;
 }

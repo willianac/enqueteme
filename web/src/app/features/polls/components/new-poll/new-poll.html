@@ -6,10 +6,8 @@
     <div tuiPlatform="web">
       <div tuiCardLarge tuiTheme="dark">
         <header tuiHeader>
-          <tui-icon icon="@tui.circle-user"/>
-          <small>
-            Willian Almeida
-          </small>
+          <tui-icon icon="@tui.circle-user" />
+          <small> Willian Almeida </small>
         </header>
         <section>
           <div>
@@ -21,7 +19,11 @@
           <div class="add-options">
             <form [formGroup]="newPollForm">
               @for (option of getOptionsKeys() ; track option) {
-              <div class="option-wrapper" animate.enter="enter-animation" animate.leave="leave-animation">
+              <div
+                class="option-wrapper"
+                animate.enter="enter-animation"
+                animate.leave="leave-animation"
+              >
                 <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
                   <input
                     tuiTextfield
@@ -31,7 +33,15 @@
                 </tui-textfield>
                 <div class="remove-btn">
                   @if ($index > 1) {
-                    <button tuiButtonClose tuiIconButton type="button" (click)="removeOption(option)" size="xs">Close</button>
+                  <button
+                    tuiButtonClose
+                    tuiIconButton
+                    type="button"
+                    (click)="removeOption(option)"
+                    size="xs"
+                  >
+                    Close
+                  </button>
                   }
                 </div>
               </div>
@@ -48,10 +58,34 @@
               Adicionar opção
             </button>
           </div>
+
+          <div class="poll-settings">
+            <div class="left">
+              <span class="label text-muted">Duração da enquete (em dias)</span>
+              <input
+                tuiSlider
+                type="range"
+                size="m"
+                [min]="1"
+                [max]="7"
+                [(ngModel)]="pollDuration"
+                [segments]="6"
+              />
+              <div class="ticks-labels">
+                <button *ngFor="let label of labels" type="button" class="tick-label">
+                  {{ label }}
+                </button>
+              </div>
+            </div>
+            <div class="right">
+              <span class="label text-muted">Exigir login para votar</span>
+              <input tuiSwitch type="checkbox" [(ngModel)]="requireLogin" />
+            </div>
+          </div>
         </section>
 
         <footer>
-          <button tuiButton appearance="secondary" size="m" >Voltar</button>
+          <button tuiButton appearance="secondary" size="m">Voltar</button>
           <button tuiButton appearance="primary" size="m">Criar enquete</button>
         </footer>
       </div>

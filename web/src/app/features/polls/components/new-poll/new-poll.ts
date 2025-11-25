@@ -3,8 +3,9 @@ import { Navbar } from "../../../../shared/components/navbar/navbar";
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton, TuiTextfield, TuiAppearance, TuiIcon } from '@taiga-ui/core';
-import { TuiButtonClose } from '@taiga-ui/kit';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TuiButtonClose, TuiSlider, TuiSwitch } from '@taiga-ui/kit';
+
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -18,9 +19,12 @@ import { CommonModule } from '@angular/common';
     TuiAppearance,
     TuiButtonClose,
     ReactiveFormsModule,
+    FormsModule,
     CommonModule,
     TuiHeader,
-    TuiIcon
+    TuiIcon,
+    TuiSlider,
+    TuiSwitch
   ],
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
@@ -30,6 +34,10 @@ export class NewPoll {
     option1: new FormControl(""),
     option2: new FormControl(""),
   });
+
+  protected pollDuration = 1
+  protected requireLogin = true;
+  protected readonly labels: number[] = [1, 2, 3, 4, 5, 6, 7];
   
   numberOfOptions = 2;
 
