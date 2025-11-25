@@ -5,10 +5,16 @@
   <div class="new-poll-form">
     <div tuiPlatform="web">
       <div tuiCardLarge tuiTheme="dark">
+        <header tuiHeader>
+          <tui-icon icon="@tui.circle-user"/>
+          <small>
+            Willian Almeida
+          </small>
+        </header>
         <section>
           <div>
             <tui-textfield tuiTextfieldSize="l">
-              <input placeholder="Dê um nome a sua enquete" tuiTextfield />
+              <input placeholder="Dê um título a sua enquete" tuiTextfield />
             </tui-textfield>
           </div>
 
@@ -45,6 +51,7 @@
         </section>
 
         <footer>
+          <button tuiButton appearance="secondary" size="m" >Voltar</button>
           <button tuiButton appearance="primary" size="m">Criar enquete</button>
         </footer>
       </div>
