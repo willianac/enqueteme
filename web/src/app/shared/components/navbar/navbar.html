@@ -1,10 +1,11 @@
-<header class="navbar">
+<header class="navbar" tuiTheme="dark">
   <div class="navbar-content">
     <div class="logo">
       <strong class="title">Enqueteme</strong>
     </div>
     <nav class="navigation">
-      <button tuiButton size="m">
+      <button tuiButton appearance="flat" size="s" [style.color]="'var(--tui-background-accent-1)'">Entrar</button>
+      <button tuiButton size="s">
         Nova enquete
         <tui-icon
           icon="@tui.plus"
