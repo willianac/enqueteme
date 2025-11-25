@@ -21,7 +21,7 @@
           <div class="add-options">
             <form [formGroup]="newPollForm">
               @for (option of getOptionsKeys() ; track option) {
-              <div class="option-wrapper">
+              <div class="option-wrapper" animate.enter="enter-animation" animate.leave="leave-animation">
                 <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
                   <input
                     tuiTextfield
