@@ -17,13 +17,18 @@ import org.springframework.web.bind.annotation.RestController;
 import com.will.enqueteme.dto.CreatePollDTO;
 import com.will.enqueteme.models.Enquete;
 import com.will.enqueteme.models.Opcao;
+import com.will.enqueteme.models.Usuario;
 import com.will.enqueteme.repositories.EnqueteRepository;
+import com.will.enqueteme.repositories.UsuarioRepository;
 
 @RestController
 @RequestMapping("/polls")
 public class EnqueteController {
     @Autowired
     private EnqueteRepository enqueteRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping("")
     public ResponseEntity<?> getAllPolls() {
@@ -34,7 +39,8 @@ public class EnqueteController {
     @PostMapping()
     public ResponseEntity<?> createPoll(@RequestBody CreatePollDTO createPollDTO) {
         if(createPollDTO.getTitle() == null || createPollDTO.getTitle().isEmpty() ||
-           createPollDTO.getOptions() == null || createPollDTO.getOptions().length < 2) {
+           createPollDTO.getOptions() == null || createPollDTO.getOptions().length < 2 || 
+           createPollDTO.getUserId() == null) {
             return ResponseEntity.badRequest().body("Invalid poll data. Title and at least two options are required.");
         }
 
@@ -51,8 +57,16 @@ public class EnqueteController {
                 })
                 .toList();
 
-            Instant expirationTime = Instant.now().plus(createPollDTO.getPollExpirationInDays(), ChronoUnit.DAYS);
+            Instant expirationTime = Instant.now().plus(
+                createPollDTO.getPollExpirationInDays() != null ? createPollDTO.getPollExpirationInDays() : 7, ChronoUnit.DAYS
+            );
+            Usuario usuario = usuarioRepository.findById(createPollDTO.getUserId()).orElse(null);
 
+            if(usuario == null) {
+                return ResponseEntity.badRequest().body("User not found.");
+            }
+
+            enquete.setUsuario(usuario);
             enquete.setExpirationDate(expirationTime);
             enquete.setVoteRequireLogin(createPollDTO.isVoteRequireLogin());
             enquete.setOpcoes(opcoes);
