@@ -12,7 +12,7 @@
         <section>
           <div>
             <tui-textfield tuiTextfieldSize="l">
-              <input placeholder="Dê um título a sua enquete" tuiTextfield />
+              <input placeholder="Dê um título a sua enquete" [(ngModel)]="pollTitle" tuiTextfield />
             </tui-textfield>
           </div>
 
@@ -86,7 +86,7 @@
 
         <footer>
           <button tuiButton appearance="secondary" size="m">Voltar</button>
-          <button tuiButton appearance="primary" size="m">Criar enquete</button>
+          <button tuiButton appearance="primary" size="m" (click)="createPoll()" >Criar enquete</button>
         </footer>
       </div>
     </div>
