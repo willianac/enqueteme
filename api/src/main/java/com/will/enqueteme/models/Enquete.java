@@ -1,6 +1,5 @@
 package com.will.enqueteme.models;
 
-import java.sql.Date;
 import java.time.Instant;
 import java.util.List;
 
@@ -46,8 +45,8 @@ public class Enquete {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
-    private Usuario usuario;
+    private Usuario user;
 
     @OneToMany(mappedBy = "enquete", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Opcao> opcoes;
+    private List<Opcao> options;
 }

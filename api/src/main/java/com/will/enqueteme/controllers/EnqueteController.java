@@ -66,10 +66,10 @@ public class EnqueteController {
                 return ResponseEntity.badRequest().body("User not found.");
             }
 
-            enquete.setUsuario(usuario);
+            enquete.setUser(usuario);
             enquete.setExpirationDate(expirationTime);
             enquete.setVoteRequireLogin(createPollDTO.isVoteRequireLogin());
-            enquete.setOpcoes(opcoes);
+            enquete.setOptions(opcoes);
 
             enqueteRepository.save(enquete);
             return ResponseEntity.created(null).body(enquete);

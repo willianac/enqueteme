@@ -2,6 +2,8 @@ package com.will.enqueteme.models;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -22,6 +24,7 @@ public class Usuario {
 
     private String name;
 
-    @OneToMany(mappedBy = "usuario", orphanRemoval = true)
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    @JsonIgnore
     private List<Enquete> enquetes;
 }
