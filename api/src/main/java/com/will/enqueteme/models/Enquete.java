@@ -1,5 +1,6 @@
 package com.will.enqueteme.models;
 
+import java.sql.Date;
 import java.time.Instant;
 import java.util.List;
 
@@ -38,6 +39,10 @@ public class Enquete {
 
     @LastModifiedDate
     private Instant updatedAt;
+
+    private boolean voteRequireLogin;
+
+    private Instant expirationDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")

@@ -1,10 +1,13 @@
 package com.will.enqueteme.controllers;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +30,7 @@ public class EnqueteController {
         return ResponseEntity.ok(enqueteRepository.findAll());
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping()
     public ResponseEntity<?> createPoll(@RequestBody CreatePollDTO createPollDTO) {
         if(createPollDTO.getTitle() == null || createPollDTO.getTitle().isEmpty() ||
@@ -47,7 +51,12 @@ public class EnqueteController {
                 })
                 .toList();
 
+            Instant expirationTime = Instant.now().plus(createPollDTO.getPollExpirationInDays(), ChronoUnit.DAYS);
+
+            enquete.setExpirationDate(expirationTime);
+            enquete.setVoteRequireLogin(createPollDTO.isVoteRequireLogin());
             enquete.setOpcoes(opcoes);
+
             enqueteRepository.save(enquete);
             return ResponseEntity.created(null).body(enquete);
         } catch (Exception e) {
