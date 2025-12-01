@@ -1,5 +1,4 @@
 import { Component, inject } from '@angular/core';
-import { Navbar } from "../../../shared/components/navbar/navbar";
 import { TuiButton, TuiTitle, TuiTextfield, TuiLabel, TuiError, TuiAlertService } from '@taiga-ui/core';
 import { TuiAvatar, TuiButtonLoading } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -11,7 +10,6 @@ import { TuiValidationError } from '@taiga-ui/cdk';
 @Component({
   selector: 'app-signin',
   imports: [
-    Navbar, 
     TuiCardLarge, 
     TuiHeader, 
     TuiTitle, 

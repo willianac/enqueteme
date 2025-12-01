@@ -1,9 +1,15 @@
+.logo {
+  width: 280px;
+  display: block;
+  margin: auto;
+  padding-top: 3rem;
+}
+
 .container {
   width: 30%;
   margin: auto;
   margin-top: 5%;
 }
-
 
 footer {
   display: flex;
@@ -24,9 +30,13 @@ footer {
 }
 
 @media screen and (max-width: 576px) {
+  .logo {
+    padding-bottom: 2rem;
+  }
+
   .container {
     width: 95%;
-    height: calc(100dvh - 96px);
+    height: calc(100dvh - 240px);
   }
 
   .login-card {
