@@ -10,3 +10,30 @@ footer {
   flex-direction: column;
   row-gap: 10px;
 }
+
+@media screen and (max-width: 1200px) {
+  .container {
+    width: 50%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .container {
+    width: 80%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .container {
+    width: 95%;
+    height: calc(100dvh - 96px);
+  }
+
+  .login-card {
+    height: 100%;
+
+    & header {
+      margin-top: 4rem;
+    }
+  }
+}
