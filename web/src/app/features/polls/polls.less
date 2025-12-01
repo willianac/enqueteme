@@ -9,10 +9,17 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   flex-wrap: wrap;
+  padding-bottom: 1rem;
 }
 
 @media (max-width: 996px) {
   .poll-list {
     grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .content {
+    width: 90%;
   }
 }

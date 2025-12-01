@@ -19,11 +19,16 @@
   }
 }
 
-.title {
-  color: white;
-  font-size: 18px;
+.logo {
+  width: 130px;
 }
 
 .appearance-hover({
   background: var(--tui-background-accent-2);
 });
+
+@media screen and (max-width: 576px) {
+  .navbar-content {
+    width: 90%;
+  }
+}
