@@ -8,6 +8,7 @@ import { TuiButtonClose, TuiSlider, TuiSwitch } from '@taiga-ui/kit';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollApi } from '../../services/poll-api';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-new-poll',
@@ -25,7 +26,8 @@ import { PollApi } from '../../services/poll-api';
     TuiHeader,
     TuiIcon,
     TuiSlider,
-    TuiSwitch
+    TuiSwitch,
+    RouterLink
   ],
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
