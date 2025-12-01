@@ -1,1 +1,27 @@
 <app-navbar></app-navbar>
+
+<div class="container">
+  <div tuiAppearance="floating" tuiCardLarge tuiTheme="dark">
+    <header tuiHeader>
+      <h1 tuiTitle>
+        Entrar
+        <span tuiSubtitle>Para entrar é bem simples, basta digitar seu nome</span>
+      </h1>
+      <aside tuiAccessories>
+        <tui-avatar appearance="primary" src="@tui.star" />
+      </aside>
+    </header>
+
+    <section>
+      <tui-textfield iconStart="@tui.user">
+        <label tuiLabel>John Doe</label>
+        <input [(ngModel)]="name" type="text" tuiTextfield />
+      </tui-textfield>
+    </section>
+
+    <footer>
+      <button size="m" style="width: 100%;" tuiButton type="button">Entrar</button>
+      <button size="m" style="width: 100%;" appearance="flat" tuiButton type="button">Voltar às enquetes</button>
+    </footer>
+  </div>
+</div>
