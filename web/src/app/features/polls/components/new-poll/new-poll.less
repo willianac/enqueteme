@@ -113,3 +113,39 @@
     outline: 0;
     cursor: pointer;
 }
+
+@media screen and (max-width: 1200px) {
+  .content, .new-poll-form {
+    width: 80%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .content, .new-poll-form {
+    width: 90%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .content, .new-poll-form {
+    width: 95%;
+  }
+
+  .poll-card {
+    min-height: calc(100dvh - 200px) !important;
+  }
+
+  .poll-settings {
+    flex-direction: column;
+    row-gap: 1.4rem;
+  }
+
+  .left, .right {
+    border-right: none !important;
+    padding: 0 !important;
+  }
+
+  footer button {
+    flex: 1;
+  }
+}
