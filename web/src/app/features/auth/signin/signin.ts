@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Navbar } from "../../../shared/components/navbar/navbar";
 import { TuiButton, TuiTitle, TuiTextfield, TuiLabel, TuiError, TuiAlertService } from '@taiga-ui/core';
-import { TuiAvatar } from '@taiga-ui/kit';
+import { TuiAvatar, TuiButtonLoading } from '@taiga-ui/kit';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { FormsModule } from '@angular/forms';
 import { UserApi } from '../services/user-api';
@@ -21,7 +21,8 @@ import { TuiValidationError } from '@taiga-ui/cdk';
     FormsModule, 
     TuiLabel,
     RouterLink,
-    TuiError
+    TuiError,
+    TuiButtonLoading
   ],
   templateUrl: './signin.html',
   styleUrl: './signin.less',
@@ -32,6 +33,7 @@ export class Signin {
   readonly router = inject(Router);
 
   name = "";
+  loading = false;
 
   protected nameError: TuiValidationError | null = null;
   
@@ -41,6 +43,7 @@ export class Signin {
       return;
     }
     this.nameError = null;
+    this.loading = true;
     this.userApi.signIn(this.name).subscribe({
       next: (res) => this.onSuccessfulSignIn(res),
       error: (err) => this.onErrorSignIn(err),
@@ -50,11 +53,13 @@ export class Signin {
 
   public onSuccessfulSignIn(res: any) {
     console.log(res);
+    this.loading = false;
     this.alerts.open('Entrou com sucesso', {label: 'Sucesso', appearance: "positive"}).subscribe();
   }
 
   public onErrorSignIn(err: any) {
     console.error(err);
+    this.loading = false;
     this.alerts.open(
       'Não conseguimos realizar o login. Por favor, tente novamente mais tarde', 
       {label: 'Service Error', appearance: "negative"}

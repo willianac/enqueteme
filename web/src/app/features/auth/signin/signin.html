@@ -21,8 +21,24 @@
     </section>
 
     <footer>
-      <button size="m" style="width: 100%;" tuiButton type="button" (click)="signIn()">Entrar</button>
-      <button size="m" style="width: 100%;" appearance="flat" tuiButton type="button" routerLink="/polls">Voltar às enquetes</button>
+      <button 
+        size="m" 
+        style="width: 100%;" 
+        tuiButton type="button" 
+        (click)="signIn()" 
+        [loading]="loading"
+      >Entrar
+    </button>
+      <button 
+        size="m" 
+        style="width: 100%;" 
+        appearance="flat" 
+        tuiButton 
+        type="button" 
+        routerLink="/polls" 
+        [disabled]="loading"
+      >Voltar às enquetes
+    </button>
     </footer>
   </div>
 </div>
