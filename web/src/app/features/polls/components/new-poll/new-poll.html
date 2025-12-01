@@ -4,6 +4,7 @@
   <h1 class="title">Criar uma Enquete</h1>
   <div class="new-poll-form">
     <div tuiPlatform="web">
+      @if(!pollWasCreated) {
       <div tuiCardLarge tuiTheme="dark" class="poll-card">
         <header tuiHeader>
           <tui-icon icon="@tui.circle-user" />
@@ -89,6 +90,19 @@
           <button tuiButton appearance="primary" size="m" (click)="createPoll()" >Criar enquete</button>
         </footer>
       </div>
+      } @else {
+        <div tuiCardLarge tuiTheme="dark" class="poll-card success-card">
+          <section>
+            <tui-icon icon="@tui.circle-check" [style.color]="'var(--tui-text-positive)'" class="icon"/>
+            <h1 [style.color]="'var(--tui-text-positive)'" class="message">Enquete criada com sucesso!</h1>
+          </section>
+
+          <footer class="footer-success">
+            <button tuiButton appearance="secondary" size="m" (click)="pollWasCreated = false">Criar outra enquete</button>
+            <button tuiButton appearance="primary" size="m" routerLink="/polls">Ir para enquetes</button>
+          </footer>
+        </div>
+      }
     </div>
   </div>
 </main>
