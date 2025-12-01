@@ -17,11 +17,12 @@
         <label tuiLabel>John Doe</label>
         <input [(ngModel)]="name" type="text" tuiTextfield />
       </tui-textfield>
+      <tui-error [error]="nameError" />
     </section>
 
     <footer>
       <button size="m" style="width: 100%;" tuiButton type="button" (click)="signIn()">Entrar</button>
-      <button size="m" style="width: 100%;" appearance="flat" tuiButton type="button">Voltar às enquetes</button>
+      <button size="m" style="width: 100%;" appearance="flat" tuiButton type="button" routerLink="/polls">Voltar às enquetes</button>
     </footer>
   </div>
 </div>
