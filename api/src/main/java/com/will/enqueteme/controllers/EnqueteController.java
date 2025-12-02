@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +31,15 @@ public class EnqueteController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @CrossOrigin(origins = "*")
     @GetMapping("")
     public ResponseEntity<?> getAllPolls() {
-        return ResponseEntity.ok(enqueteRepository.findAll());
+        Iterable<Enquete> pollsResponse = enqueteRepository.findAll();
+        List<Enquete> polls = StreamSupport.stream(pollsResponse.spliterator(), false).toList();
+        if(polls.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(polls);
     }
 
     @CrossOrigin(origins = "*")
