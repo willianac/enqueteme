@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { UserApi } from '../../auth/services/user-api';
 
 type CreatePollResponse = {
   pollId: string;
@@ -22,16 +23,23 @@ type CreatePollRequest = {
 })
 export class PollApi {
   http = inject(HttpClient);
+  userApi = inject(UserApi);
+
   private apiUrl = "http://localhost:8080/";
-  private userId = 1
 
   public createPoll(createPollRequest: CreatePollRequest) {
+    const user = this.userApi.user()
+
     return this.http.post<CreatePollResponse>(`${this.apiUrl}polls`, { 
       title: createPollRequest.title, 
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
       durationDays: createPollRequest.durationDays,
-      userId: this.userId
+      userId: 1
     });
+  }
+
+  public getAllPolls() {
+    return this.http.get<CreatePollResponse[]>(`${this.apiUrl}polls`);
   }
 }

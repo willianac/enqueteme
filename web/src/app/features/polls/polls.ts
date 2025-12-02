@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Navbar } from "../../shared/components/navbar/navbar";
 import { Poll } from "./components/poll/poll";
+import { PollApi } from './services/poll-api';
 
 @Component({
   selector: 'app-polls',
@@ -9,5 +10,12 @@ import { Poll } from "./components/poll/poll";
   styleUrl: './polls.less',
 })
 export class Polls {
+  pollApi = inject(PollApi);
+  polls = []
 
+  ngOnInit() {
+    this.pollApi.getAllPolls().subscribe(polls => {
+      console.log(polls);
+    });
+  }
 }
