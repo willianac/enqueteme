@@ -97,7 +97,12 @@ export class NewPoll {
     this.cannotCreatePollError = null;
     const options = this.newPollForm.getRawValue();
     const title = this.pollTitle;
-    this.pollApi.createPoll({ title, options: Object.values(options) }).subscribe({
+    this.pollApi.createPoll({ 
+      title, 
+      options: Object.values(options), 
+      voteRequireLogin: this.requireLogin, 
+      durationDays: this.pollDuration
+    }).subscribe({
       next: () => this.onPollCreation(),
       error: (err) => this.onPollCreationError(err)
     });
