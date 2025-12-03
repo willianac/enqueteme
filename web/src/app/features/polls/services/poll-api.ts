@@ -35,7 +35,7 @@ export class PollApi {
       title: createPollRequest.title, 
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
-      durationDays: createPollRequest.durationDays,
+      pollExpirationInDays: createPollRequest.durationDays,
       userId: 1
     });
   }
