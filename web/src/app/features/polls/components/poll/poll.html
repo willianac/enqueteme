@@ -3,109 +3,31 @@
     <div tuiAppearance="floating" tuiCardLarge class="poll-card" tuiTheme="dark">
       <header tuiHeader>
         <h2 tuiTitle class="title">
-          {{title}}
+          {{ pollData.title }}
         </h2>
       </header>
 
       <section>
         <form [formGroup]="pollForm">
-          <!-- <label tuiLabel class="option">
-            <input formControlName="option" size="m" tuiRadio type="radio" value="taiga" />
-            <span>Imaginary</span>
-          </label>
-
+          @for (option of pollData.options; track option.id) {
           <label tuiLabel class="option">
-            <input formControlName="option" size="m" tuiRadio type="radio" value="outro" />
-            <span>Bring Me To Life</span>
+            <input
+              formControlName="option"
+              type="radio"
+              tuiRadio
+              [value]="option.name.toLowerCase()"
+            />
+            <span>{{ option.name }}</span>
           </label>
-
-          <label tuiLabel class="option">
-            <input formControlName="option" size="m" tuiRadio type="radio" value="teste"/>
-            <span>Haunted</span>
-          </label> -->
-
-            @for (option of options; track $index) {
-            <label tuiLabel class="option">
-                <input formControlName="option" type="radio" tuiRadio [value]="option.toLowerCase()">
-                <span>{{option}}</span>
-            </label>
-        }
-
+          }
         </form>
-
       </section>
-
-      <!-- <section class="result">
-        <div class="option-votes">
-          <div class="percentage">
-            <span>50%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="50"
-              [color]="'var(--tui-background-accent-2)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>30%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="30"
-              [color]="'var(--tui-background-accent-1)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>5%</span>
-          </div>
-          <div class="progress">
-            <strong>My Immortal</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="5"
-              [color]="'var(--tui-text-action)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>15%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="15"
-              [color]="'var(--tui-text-negative-hover)'"
-            ></progress>
-          </div>
-        </div>
-      </section> -->
 
       <footer>
         <div class="poll-info">
-          <span class="text-muted">Total de Votos: {{totalVotes}}</span>
+          <span class="text-muted">Total de Votos: 50</span>
           <tui-pin class="pin bg-muted" />
-          <span class="text-muted">{{daysRemaining}} Dias Restantes</span>
+          <span class="text-muted">{{daysRemaining}} dias restantes</span>
         </div>
         <div class="action">
           <button tuiButton size="m">Votar</button>

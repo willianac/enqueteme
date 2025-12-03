@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { UserApi } from '../../auth/services/user-api';
+import { PollType } from '../../../shared/types/Poll';
 
 type CreatePollResponse = {
   pollId: string;
@@ -40,6 +41,6 @@ export class PollApi {
   }
 
   public getAllPolls() {
-    return this.http.get<CreatePollResponse[]>(`${this.apiUrl}polls`);
+    return this.http.get<PollType[]>(`${this.apiUrl}polls`);
   }
 }

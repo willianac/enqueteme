@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -6,6 +6,7 @@ import { TuiLabel, TuiTitle} from '@taiga-ui/core';
 import { TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { PollType } from '../../../../shared/types/Poll';
 
 @Component({
   selector: 'app-poll',
@@ -25,13 +26,18 @@ import { CommonModule } from '@angular/common';
   templateUrl: './poll.html',
   styleUrl: './poll.less',
 })
-export class Poll {
-  @Input({ required: true }) title!: string
-  @Input({ required: true }) options!: string[]
-  @Input({ required: true }) totalVotes!: number
-  @Input({ required: true }) daysRemaining!: number
+export class Poll implements OnChanges {
+  @Input({ required: true }) pollData!: PollType;
+  daysRemaining = 0;
 
   protected pollForm = new FormGroup({
     option: new FormControl(false)
   });
+
+  ngOnChanges() {
+    const currentDate = new Date();
+    const endDate = new Date(this.pollData.expirationDate);
+    const timeDiff = endDate.getTime() - currentDate.getTime();
+    this.daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+  }
 }
