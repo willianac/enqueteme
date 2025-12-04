@@ -1,0 +1,10 @@
+services:
+  db:
+    image: 'mysql:latest'
+    environment:
+      - 'MYSQL_DATABASE=enqueteme'
+      - 'MYSQL_PASSWORD=will2009'
+      - 'MYSQL_ROOT_PASSWORD=root'
+      - 'MYSQL_USER=will'
+    ports:
+      - '3306'
