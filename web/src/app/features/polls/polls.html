@@ -4,7 +4,7 @@
 
   @if(polls?.length) {
     <div class="poll-list">
-      @for(poll of polls; track $index) {
+      @for(poll of polls; track poll.id) {
       <div class="poll">
         <app-poll [pollData]="poll"></app-poll>
       </div>

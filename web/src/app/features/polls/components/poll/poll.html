@@ -15,7 +15,7 @@
               formControlName="option"
               type="radio"
               tuiRadio
-              [value]="option.name.toLowerCase()"
+              [value]="option.id"
             />
             <span>{{ option.name }}</span>
           </label>
@@ -30,7 +30,7 @@
           <span class="text-muted">{{daysRemaining}} dias restantes</span>
         </div>
         <div class="action">
-          <button tuiButton size="m">Votar</button>
+          <button tuiButton size="m" (click)="vote()">Votar</button>
         </div>
       </footer>
     </div>

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -7,6 +7,7 @@ import { TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
+import { PollApi } from '../../services/poll-api';
 
 @Component({
   selector: 'app-poll',
@@ -27,12 +28,22 @@ import { PollType } from '../../../../shared/types/Poll';
   styleUrl: './poll.less',
 })
 export class Poll implements OnChanges {
+  pollApi = inject(PollApi);
   @Input({ required: true }) pollData!: PollType;
   daysRemaining = 0;
 
   protected pollForm = new FormGroup({
-    option: new FormControl(false)
+    option: new FormControl(0)
   });
+
+  protected vote() {
+    this.pollApi.setVote({
+      optionId: this.pollForm.getRawValue().option ?? 0,
+      pollId: this.pollData.id
+    }).subscribe({
+      next: (res) => console.log(res)
+    })
+  }
 
   ngOnChanges() {
     const currentDate = new Date();

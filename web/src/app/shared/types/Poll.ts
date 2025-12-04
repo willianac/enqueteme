@@ -1,14 +1,9 @@
 export type PollType = {
   id: number;
   title: string;
-  createdAt: string;
-  updatedAt: string;
-  voteRequireLogin: boolean;
+  creatorName: string;
   expirationDate: string;
-  user: {
-    id: number;
-    name: string;
-  };
+  voteRequireLogin: boolean;
   options: {
     id: number;
     name: string;

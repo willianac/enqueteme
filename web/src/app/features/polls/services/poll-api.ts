@@ -19,6 +19,11 @@ type CreatePollRequest = {
   durationDays?: number;
 }
 
+type SetVoteRequest = {
+  pollId: number;
+  optionId: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -41,6 +46,15 @@ export class PollApi {
   }
 
   public getAllPolls() {
+    const user = this.userApi.user()
     return this.http.get<PollType[]>(`${this.apiUrl}polls`);
+  }
+
+  public setVote(setVoteRequest: SetVoteRequest) {
+    return this.http.post(`${this.apiUrl}polls/vote`, {
+      pollId: setVoteRequest.pollId,
+      optionId: setVoteRequest.optionId,
+      userId: 1
+    })
   }
 }
