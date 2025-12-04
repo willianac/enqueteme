@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
-import { TuiButton } from '@taiga-ui/core';
+import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiLabel, TuiTitle} from '@taiga-ui/core';
 import { TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
@@ -22,6 +22,7 @@ import { PollApi } from '../../services/poll-api';
     TuiRadio, 
     TuiPin, 
     TuiProgress,
+    TuiIcon,
     CommonModule
   ],
   templateUrl: './poll.html',
@@ -30,10 +31,13 @@ import { PollApi } from '../../services/poll-api';
 export class Poll implements OnChanges {
   pollApi = inject(PollApi);
   cdr = inject(ChangeDetectorRef)
+
   @Input({ required: true }) pollData!: PollType;
+  
   daysRemaining = 0;
   totalVotes = 0;
   voted = false;
+  idOptionChosen: null | number = null;
 
   progressColors = [
     "var(--tui-text-action)",
@@ -54,6 +58,7 @@ export class Poll implements OnChanges {
     }).subscribe({
       next: () => this.pollData.options = this.returnOptionsWithPercentageAndColors(),
       complete: () => {
+        this.idOptionChosen = this.pollForm.getRawValue().option
         this.voted = true
         this.cdr.detectChanges();
       }

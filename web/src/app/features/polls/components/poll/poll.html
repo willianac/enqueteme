@@ -28,10 +28,17 @@
           @for (option of pollData.options; track option.id) {
             <div class="option-votes">
               <div class="percentage">
-                <span>{{option.votePercentage}}%</span>
+                <span [class.chosen]="option.id == idOptionChosen">{{option.votePercentage}}%</span>
               </div>
               <div class="progress">
-                <strong>{{option.name}}</strong>
+                <span [class.chosen]="option.id == idOptionChosen">{{option.name}}</span>
+                @if(option.id == idOptionChosen) {
+                  <tui-icon
+                    icon="@tui.circle-check"
+                    [style.color]="'var(--tui-background-accent-2)'"
+                    style="margin-left: 5px; font-size: 18px; margin-bottom: 4px;"
+                  />
+                }
                 <progress
                   size="m"
                   tuiProgressBar
@@ -52,7 +59,9 @@
           <span class="text-muted">{{daysRemaining}} dias restantes</span>
         </div>
         <div class="action">
-          <button tuiButton size="m" (click)="vote()">Votar</button>
+          @if(!voted) {
+            <button tuiButton size="m" (click)="vote()" animate.leave="leave-animation">Votar</button>
+          }
         </div>
       </footer>
     </div>
