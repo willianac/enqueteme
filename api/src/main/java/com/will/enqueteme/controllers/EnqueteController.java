@@ -37,7 +37,10 @@ public class EnqueteController {
     @GetMapping("")
     public ResponseEntity<?> getAllPolls() {
         Iterable<Enquete> pollsResponse = enqueteRepository.findAll();
-        List<Enquete> polls = StreamSupport.stream(pollsResponse.spliterator(), false).toList();
+        List<EnqueteResponseDTO> polls = StreamSupport.stream(pollsResponse.spliterator(), false)
+            .map(EnqueteResponseDTO::new)
+            .toList();
+
         if(polls.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
