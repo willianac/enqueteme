@@ -31,6 +31,7 @@ export class Poll implements OnChanges {
   pollApi = inject(PollApi);
   @Input({ required: true }) pollData!: PollType;
   daysRemaining = 0;
+  totalVotes = 0;
 
   protected pollForm = new FormGroup({
     option: new FormControl(0)
@@ -45,10 +46,21 @@ export class Poll implements OnChanges {
     })
   }
 
-  ngOnChanges() {
+  private calcTotalVotes(options: PollType["options"]) {
+    this.totalVotes = options.reduce((acc, opt) => {
+      return acc + opt.votes;
+    }, 0);
+  }
+
+  private calcDaysRemaining(date: string) {
     const currentDate = new Date();
     const endDate = new Date(this.pollData.expirationDate);
     const timeDiff = endDate.getTime() - currentDate.getTime();
     this.daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+  }
+
+  ngOnChanges() {
+    this.calcDaysRemaining(this.pollData.expirationDate);
+    this.calcTotalVotes(this.pollData.options);
   }
 }
