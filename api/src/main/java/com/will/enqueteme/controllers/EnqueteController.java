@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.will.enqueteme.dto.CreatePollDTO;
+import com.will.enqueteme.dto.CreateVoteDTO;
+import com.will.enqueteme.dto.EnqueteResponseDTO;
 import com.will.enqueteme.models.Enquete;
 import com.will.enqueteme.models.Opcao;
 import com.will.enqueteme.models.Usuario;
@@ -84,5 +86,29 @@ public class EnqueteController {
             System.out.println(e.getMessage());
             return ResponseEntity.status(500).body("An error occurred while creating the poll.");
         }
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/vote")
+    public ResponseEntity<?> voteInPoll(@RequestBody CreateVoteDTO createVoteDTO) {
+        Enquete enquete = enqueteRepository.findById(createVoteDTO.getPollId()).orElse(null);
+        if(enquete == null) {
+            return ResponseEntity.badRequest().body("Poll not found.");
+        }
+        if(createVoteDTO.getOptionId() == null) {
+            return ResponseEntity.badRequest().body("Option ID is required to vote.");
+        }
+
+        List<Opcao> options = enquete.getOptions();
+
+        for(Opcao option : options) {
+            if(option.getId() == createVoteDTO.getOptionId()) {
+                option.setVotes(option.getVotes() + 1);
+            }
+        }
+        enquete.setOptions(options);
+        enqueteRepository.save(enquete);
+
+        return ResponseEntity.ok(new EnqueteResponseDTO(enquete));
     }
 }
