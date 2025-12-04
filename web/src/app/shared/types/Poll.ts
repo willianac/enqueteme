@@ -8,5 +8,6 @@ export type PollType = {
     id: number;
     name: string;
     votes: number;
+    votePercentage?: number;
   }[];
 };

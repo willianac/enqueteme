@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
@@ -29,9 +29,11 @@ import { PollApi } from '../../services/poll-api';
 })
 export class Poll implements OnChanges {
   pollApi = inject(PollApi);
+  cdr = inject(ChangeDetectorRef)
   @Input({ required: true }) pollData!: PollType;
   daysRemaining = 0;
   totalVotes = 0;
+  voted = false;
 
   protected pollForm = new FormGroup({
     option: new FormControl(0)
@@ -42,7 +44,18 @@ export class Poll implements OnChanges {
       optionId: this.pollForm.getRawValue().option ?? 0,
       pollId: this.pollData.id
     }).subscribe({
-      next: (res) => console.log(res)
+      next: () => this.pollData.options = this.returnOptionsWithPercentage(),
+      complete: () => {
+        this.voted = true
+        this.cdr.detectChanges();
+      }
+    })
+  }
+
+  private returnOptionsWithPercentage() {
+    return this.pollData.options.map((opt) => {
+      const perc = (opt.votes / this.totalVotes) * 100
+      return { ...opt, votePercentage: Math.round(perc) }
     })
   }
 

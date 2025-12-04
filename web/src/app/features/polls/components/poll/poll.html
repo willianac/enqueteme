@@ -7,23 +7,24 @@
         </h2>
       </header>
 
-      <section>
-        <form [formGroup]="pollForm">
-          @for (option of pollData.options; track option.id) {
-          <label tuiLabel class="option">
-            <input
-              formControlName="option"
-              type="radio"
-              tuiRadio
-              [value]="option.id"
-            />
-            <span>{{ option.name }}</span>
-          </label>
-          }
-        </form>
-      </section>
-
-      <!-- <section class="result">
+      @if(!voted) {
+        <section animate.leave="leave-animation">
+          <form [formGroup]="pollForm">
+            @for (option of pollData.options; track option.id) {
+            <label tuiLabel class="option">
+              <input
+                formControlName="option"
+                type="radio"
+                tuiRadio
+                [value]="option.id"
+              />
+              <span>{{ option.name }}</span>
+            </label>
+            }
+          </form>
+        </section>
+      } @else {
+        <section class="result" animate.enter="enter-animation">
         <div class="option-votes">
           <div class="percentage">
             <span>50%</span>
@@ -87,7 +88,9 @@
             ></progress>
           </div>
         </div>
-      </section> -->
+      </section>
+      }
+        
 
       <footer>
         <div class="poll-info">
