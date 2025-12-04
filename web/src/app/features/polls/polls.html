@@ -1,10 +1,18 @@
 <app-navbar></app-navbar>
 <main class="content">
-  <div class="poll-list">
-    @for (poll of polls$ | async; track $index) {
-    <div class="poll">
-      <app-poll [pollData]="poll"></app-poll>
+  @let polls = polls$ | async;
+
+  @if(polls?.length) {
+    <div class="poll-list">
+      @for(poll of polls; track $index) {
+      <div class="poll">
+        <app-poll [pollData]="poll"></app-poll>
+      </div>
+      }
     </div>
-    }
-  </div>
+  } @else {
+    <div class="no-polls">
+      <h1>No polls found</h1>
+    </div>
+  }
 </main>
