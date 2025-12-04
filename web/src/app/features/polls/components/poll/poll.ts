@@ -35,6 +35,14 @@ export class Poll implements OnChanges {
   totalVotes = 0;
   voted = false;
 
+  progressColors = [
+    "var(--tui-text-action)",
+    "var(--tui-text-negative-hover)",
+    "var(--tui-text-positive-hover)",
+    "var(--tui-text-primary)",
+    "var(--tui-text-tertiary)"
+  ]
+
   protected pollForm = new FormGroup({
     option: new FormControl(0)
   });
@@ -44,7 +52,7 @@ export class Poll implements OnChanges {
       optionId: this.pollForm.getRawValue().option ?? 0,
       pollId: this.pollData.id
     }).subscribe({
-      next: () => this.pollData.options = this.returnOptionsWithPercentage(),
+      next: () => this.pollData.options = this.returnOptionsWithPercentageAndColors(),
       complete: () => {
         this.voted = true
         this.cdr.detectChanges();
@@ -52,11 +60,16 @@ export class Poll implements OnChanges {
     })
   }
 
-  private returnOptionsWithPercentage() {
-    return this.pollData.options.map((opt) => {
-      const perc = (opt.votes / this.totalVotes) * 100
-      return { ...opt, votePercentage: Math.round(perc) }
-    })
+  private returnOptionsWithPercentageAndColors() {
+    return this.pollData.options
+      .map((opt) => {
+        const perc = (opt.votes / this.totalVotes) * 100
+        return { ...opt, votePercentage: Math.round(perc) }
+      })
+      .map((opt, index) => {
+        return { ...opt, progressColor: this.progressColors[index % this.progressColors.length] }
+      }
+    );
   }
 
   private calcTotalVotes(options: PollType["options"]) {

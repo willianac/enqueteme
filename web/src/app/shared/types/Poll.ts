@@ -9,5 +9,6 @@ export type PollType = {
     name: string;
     votes: number;
     votePercentage?: number;
+    progressColor?: string;
   }[];
 };

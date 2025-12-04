@@ -8,7 +8,7 @@
       </header>
 
       @if(!voted) {
-        <section animate.leave="leave-animation">
+        <section>
           <form [formGroup]="pollForm">
             @for (option of pollData.options; track option.id) {
             <label tuiLabel class="option">
@@ -25,73 +25,26 @@
         </section>
       } @else {
         <section class="result" animate.enter="enter-animation">
-        <div class="option-votes">
-          <div class="percentage">
-            <span>50%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="50"
-              [color]="'var(--tui-background-accent-2)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>30%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="30"
-              [color]="'var(--tui-background-accent-1)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>5%</span>
-          </div>
-          <div class="progress">
-            <strong>My Immortal</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="5"
-              [color]="'var(--tui-text-action)'"
-            ></progress>
-          </div>
-        </div>
-
-        <div class="option-votes">
-          <div class="percentage">
-            <span>15%</span>
-          </div>
-          <div class="progress">
-            <strong>Imaginary</strong>
-            <progress
-              size="m"
-              tuiProgressBar
-              [max]="100"
-              [value]="15"
-              [color]="'var(--tui-text-negative-hover)'"
-            ></progress>
-          </div>
-        </div>
-      </section>
+          @for (option of pollData.options; track option.id) {
+            <div class="option-votes">
+              <div class="percentage">
+                <span>{{option.votePercentage}}%</span>
+              </div>
+              <div class="progress">
+                <strong>{{option.name}}</strong>
+                <progress
+                  size="m"
+                  tuiProgressBar
+                  [max]="100"
+                  [value]="option.votePercentage"
+                  [color]="option.progressColor ?? 'var(--tui-color-accent-2)'"
+                ></progress>
+              </div>
+            </div>
+          }
+        </section>
       }
         
-
       <footer>
         <div class="poll-info">
           <span class="text-muted">Total de Votos: {{totalVotes}}</span>
