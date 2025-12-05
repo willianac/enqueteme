@@ -56,8 +56,9 @@ export class Poll implements OnChanges {
       optionId: this.pollForm.getRawValue().option ?? 0,
       pollId: this.pollData.id
     }).subscribe({
-      next: () => this.pollData.options = this.returnOptionsWithPercentageAndColors(),
-      complete: () => {
+      next: (res) => {
+        this.totalVotes++
+        this.pollData.options = this.returnOptionsWithPercentageAndColors(res)
         this.idOptionChosen = this.pollForm.getRawValue().option
         this.voted = true
         this.cdr.detectChanges();
@@ -65,8 +66,8 @@ export class Poll implements OnChanges {
     })
   }
 
-  private returnOptionsWithPercentageAndColors() {
-    return this.pollData.options
+  private returnOptionsWithPercentageAndColors(poll: PollType) {
+    return poll.options
       .map((opt) => {
         const perc = (opt.votes / this.totalVotes) * 100
         return { ...opt, votePercentage: Math.round(perc) }
