@@ -3,7 +3,7 @@ import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiLabel, TuiTitle} from '@taiga-ui/core';
-import { TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
+import { TuiChip, TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
@@ -23,6 +23,7 @@ import { PollApi } from '../../services/poll-api';
     TuiPin, 
     TuiProgress,
     TuiIcon,
+    TuiChip,
     CommonModule
   ],
   templateUrl: './poll.html',

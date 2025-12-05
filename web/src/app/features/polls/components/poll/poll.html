@@ -1,7 +1,20 @@
 <div class="poll-wrapper">
   <div tuiPlatform="web">
     <div tuiAppearance="floating" tuiCardLarge class="poll-card" tuiTheme="dark">
-      <header tuiHeader>
+      <header tuiHeader style="display: flex; flex-direction: column;">
+        <div class="header-info">
+          <div class="creator">
+            <tui-icon
+              icon="@tui.circle-user"
+              [style.color]="'var(--tui-background-accent-2)'"
+              style="font-size: 16px; position: relative; bottom: 1px; margin-right: 4px;"
+            />
+            <small class="text-muted chosen">{{pollData.creatorName}}</small>
+          </div>
+          @if (pollData.voteRequireLogin) {
+            <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
+          }
+        </div>
         <h2 tuiTitle class="title">
           {{ pollData.title }}
         </h2>
