@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
-import { TuiButton, TuiIcon } from '@taiga-ui/core';
+import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiLabel, TuiTitle} from '@taiga-ui/core';
 import { TuiChip, TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
@@ -8,6 +8,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
 import { PollApi } from '../../services/poll-api';
+import { UserApi } from '../../../auth/services/user-api';
 
 @Component({
   selector: 'app-poll',
@@ -30,8 +31,10 @@ import { PollApi } from '../../services/poll-api';
   styleUrl: './poll.less',
 })
 export class Poll implements OnChanges {
-  pollApi = inject(PollApi);
-  cdr = inject(ChangeDetectorRef)
+  readonly pollApi = inject(PollApi);
+  readonly userApi = inject(UserApi);
+  readonly cdr = inject(ChangeDetectorRef);
+  readonly alerts = inject(TuiAlertService);
 
   @Input({ required: true }) pollData!: PollType;
   
@@ -53,7 +56,13 @@ export class Poll implements OnChanges {
   });
 
   protected vote() {
-    this.pollApi.setVote({
+    if(!this.isUserAllowedToVote()) {
+      return this.alerts.open(
+        'É preciso fazer o login antes de votar nesta enquete.', 
+        { label: 'Faça o login', appearance: "negative" }
+      ).subscribe();
+    }
+    return this.pollApi.setVote({
       optionId: this.pollForm.getRawValue().option ?? 0,
       pollId: this.pollData.id
     }).subscribe({
@@ -83,6 +92,21 @@ export class Poll implements OnChanges {
     this.totalVotes = options.reduce((acc, opt) => {
       return acc + opt.votes;
     }, 0);
+  }
+
+  private isUserValid() {
+    if(this.pollData.voteRequireLogin) {
+      return this.userApi.user() !== null;
+    }
+    return true
+  }
+
+  private isUserAllowedToVote() {
+    const currentDate = new Date();
+    const endDate = new Date(this.pollData.expirationDate);
+    const validUser = this.isUserValid();
+
+    return currentDate < endDate && validUser;
   }
 
   private calcDaysRemaining(date: string) {
