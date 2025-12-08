@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiPlatform, TuiValidationError } from '@taiga-ui/cdk';
@@ -16,6 +16,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { CommonModule } from '@angular/common';
 import { PollApi } from '../../services/poll-api';
 import { RouterLink } from '@angular/router';
+import { UserApi } from '../../../auth/services/user-api';
 
 @Component({
   selector: 'app-new-poll',
@@ -40,8 +41,9 @@ import { RouterLink } from '@angular/router';
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
 })
-export class NewPoll {
+export class NewPoll implements OnInit {
   readonly pollApi = inject(PollApi);
+  readonly userApi = inject(UserApi);
   readonly alerts = inject(TuiAlertService);
 
   protected newPollForm: FormGroup = new FormGroup({
@@ -104,6 +106,11 @@ export class NewPoll {
   }
 
   public createPoll() {
+    if(!this.userApi.user()) {
+      this.alerts.open('Por favor, faça o login antes.', { label: 'Erro', appearance: "negative" }).subscribe();
+      return;
+    }
+
     if (!this.isPollCreationAllowed()) {
       this.cannotCreatePollError = new TuiValidationError(
         'Por favor, preencha todos os campos para criar a enquete.'
@@ -124,5 +131,13 @@ export class NewPoll {
         next: () => this.onPollCreation(),
         error: (err) => this.onPollCreationError(err),
       });
+  }
+
+  ngOnInit() {
+    if(!this.userApi.user()) {
+      this.alerts
+      .open('É necessário realizar o login antes de criar uma enquete.', { label: 'Atenção', appearance: "warning" })
+      .subscribe();
+    }
   }
 }
