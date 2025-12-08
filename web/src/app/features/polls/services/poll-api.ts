@@ -42,20 +42,20 @@ export class PollApi {
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
       pollExpirationInDays: createPollRequest.durationDays,
-      userId: 1
+      userId: user?.id
     });
   }
 
   public getAllPolls() {
-    const user = this.userApi.user()
     return this.http.get<PollType[]>(`${this.apiUrl}polls`);
   }
 
   public setVote(setVoteRequest: SetVoteRequest): Observable<PollType> {
+    const user = this.userApi.user()
     return this.http.post<PollType>(`${this.apiUrl}polls/vote`, {
       pollId: setVoteRequest.pollId,
       optionId: setVoteRequest.optionId,
-      userId: 1
+      userId: user?.id
     })
   }
 }
