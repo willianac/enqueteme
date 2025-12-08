@@ -2,15 +2,19 @@
   <div class="navbar-content">
     <img src="assets/logo.png" alt="" class="logo" routerLink="/">
     <nav class="navigation">
-      <button
-        tuiButton
-        appearance="flat"
-        size="s"
-        [style.color]="'var(--tui-background-accent-1)'"
-        routerLink="/signin"
-      >
-        Entrar
-      </button>
+      @if(user) {
+        <span class="user">Olá, {{user.name}}</span>
+      } @else {
+        <button
+          tuiButton
+          appearance="flat"
+          size="s"
+          [style.color]="'var(--tui-background-accent-1)'"
+          routerLink="/signin"
+        >
+          Entrar
+        </button>
+      }
       <button tuiButton size="s" routerLink="/new-poll">
         Nova enquete
         <tui-icon icon="@tui.plus" [style.height.rem]="1" />
