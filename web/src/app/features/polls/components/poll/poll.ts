@@ -3,7 +3,7 @@ import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiLabel, TuiTitle} from '@taiga-ui/core';
-import { TuiChip, TuiPin, TuiProgress, TuiRadio } from '@taiga-ui/kit';
+import { TuiChip, TuiPin, TuiProgress, TuiRadio, TuiMessage } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
@@ -25,6 +25,7 @@ import { UserApi } from '../../../auth/services/user-api';
     TuiProgress,
     TuiIcon,
     TuiChip,
+    TuiMessage,
     CommonModule
   ],
   templateUrl: './poll.html',
@@ -42,6 +43,7 @@ export class Poll implements OnChanges {
   totalVotes = 0;
   voted = false;
   idOptionChosen: null | number = null;
+  noOptionChosenError = false;
 
   progressColors = [
     "var(--tui-text-action)",
@@ -56,12 +58,17 @@ export class Poll implements OnChanges {
   });
 
   protected vote() {
+    if(!this.idOptionChosen) {
+      return this.noOptionChosenError = true
+    }
     if(!this.isUserAllowedToVote()) {
       return this.alerts.open(
         'É preciso fazer o login antes de votar nesta enquete.', 
         { label: 'Faça o login', appearance: "negative" }
       ).subscribe();
     }
+    this.noOptionChosenError = false;
+    
     return this.pollApi.setVote({
       optionId: this.pollForm.getRawValue().option ?? 0,
       pollId: this.pollData.id

@@ -36,6 +36,9 @@
             }
           </form>
         </section>
+        @if (noOptionChosenError) {
+          <span tuiMessage appearance="negative">Por favor selecione uma opção</span>
+        }
       } @else {
         <section class="result" animate.enter="enter-animation">
           @for (option of pollData.options; track option.id) {
