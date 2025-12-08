@@ -54,11 +54,11 @@ export class Poll implements OnChanges {
   ]
 
   protected pollForm = new FormGroup({
-    option: new FormControl(0)
+    option: new FormControl<null | number>(null)
   });
 
   protected vote() {
-    if(!this.idOptionChosen) {
+    if(!this.pollForm.getRawValue().option) {
       return this.noOptionChosenError = true
     }
     if(!this.isUserAllowedToVote()) {
