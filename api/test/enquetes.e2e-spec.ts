@@ -12,7 +12,11 @@ describe('Enquetes API', () => {
     },
     enquete: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       create: jest.fn(),
+    },
+    opcao: {
+      update: jest.fn(),
     },
   };
   const usuario = { id: 1n, name: 'Will' };
@@ -111,5 +115,62 @@ describe('Enquetes API', () => {
     expect(data.expirationDate.getTime() - data.createdAt.getTime()).toBe(
       7 * 24 * 60 * 60 * 1000,
     );
+  });
+
+  it('rejects a vote for an unknown poll', async () => {
+    prisma.enquete.findUnique.mockResolvedValue(null);
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 999, optionId: 20 })
+      .expect(400);
+  });
+
+  it('rejects a vote without an option', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      opcoes: [...enquete.opcoes],
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10 })
+      .expect(400);
+  });
+
+  it('preserves the poll when the option does not belong to it', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      opcoes: [...enquete.opcoes],
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 999 })
+      .expect(200)
+      .expect((response) => {
+        expect(response.body.options[0].votes).toBe(0);
+      });
+
+    expect(prisma.opcao.update).not.toHaveBeenCalled();
+  });
+
+  it('increments the selected option', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      opcoes: [...enquete.opcoes],
+    });
+    prisma.opcao.update.mockResolvedValue({
+      ...enquete.opcoes[0],
+      votes: 1n,
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 20 })
+      .expect(200)
+      .expect((response) => {
+        expect(response.body.options[0].votes).toBe(1);
+      });
   });
 });
