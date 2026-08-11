@@ -10,6 +10,10 @@
 /web/node_modules
 /web/npm-debug.log
 /web/yarn-error.log
+/api/node_modules
+/api/dist
+/api/src/generated
+/api/.env
 
 # Visual Studio Code
 .vscode/*
