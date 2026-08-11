@@ -17,6 +17,7 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
         user: decodeURIComponent(databaseUrl.username),
         password: decodeURIComponent(databaseUrl.password),
         database: decodeURIComponent(databaseUrl.pathname.slice(1)),
+        timezone: 'Z',
       }),
     });
   }
