@@ -12,7 +12,7 @@ type User = {
 })
 export class UserApi {
   private http = inject(HttpClient);
-  private apiUrl = "http://localhost:8080/";
+  private apiUrl = '/api/';
 
   public readonly user = signal<User | null>(null);
   

@@ -32,7 +32,7 @@ export class PollApi {
   http = inject(HttpClient);
   userApi = inject(UserApi);
 
-  private apiUrl = "http://localhost:8080/";
+  private apiUrl = '/api/';
 
   public createPoll(createPollRequest: CreatePollRequest) {
     const user = this.userApi.user()
