@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
 import { CreateEnqueteDto } from './create-enquete.dto';
+import { CreateVotoDto } from './create-voto.dto';
 import { EnquetesService } from './enquetes.service';
 
 @Controller('polls')
@@ -23,5 +24,11 @@ export class EnquetesController {
   @Post()
   create(@Body() body: CreateEnqueteDto) {
     return this.enquetesService.create(body);
+  }
+
+  @Post('vote')
+  @HttpCode(200)
+  vote(@Body() body: CreateVotoDto) {
+    return this.enquetesService.vote(body);
   }
 }

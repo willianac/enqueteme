@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { toSafeNumber } from '../prisma/to-safe-number';
 import { CreateEnqueteDto } from './create-enquete.dto';
+import { CreateVotoDto } from './create-voto.dto';
 
 type EnqueteCompleta = Prisma.EnqueteGetPayload<{
   include: { usuario: true; opcoes: true };
@@ -75,6 +76,36 @@ export class EnquetesService {
       },
       options: this.options(enquete),
     };
+  }
+
+  async vote(body: CreateVotoDto) {
+    const enquete = await this.prisma.enquete.findUnique({
+      where: { id: BigInt(body.pollId ?? 0) },
+      include: { usuario: true, opcoes: true },
+    });
+
+    if (!enquete) {
+      throw new BadRequestException('Poll not found.');
+    }
+
+    if (body.optionId == null) {
+      throw new BadRequestException('Option ID is required to vote.');
+    }
+
+    const optionId = BigInt(body.optionId);
+    const opcao = enquete.opcoes.find(({ id }) => id === optionId);
+
+    if (opcao) {
+      const updated = await this.prisma.opcao.update({
+        where: { id: opcao.id },
+        data: { votes: (opcao.votes ?? 0n) + 1n },
+      });
+      enquete.opcoes = enquete.opcoes.map((item) =>
+        item.id === updated.id ? updated : item,
+      );
+    }
+
+    return this.toResponse(enquete);
   }
 
   private toResponse(enquete: EnqueteCompleta) {
