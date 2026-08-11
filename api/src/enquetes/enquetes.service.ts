@@ -67,29 +67,33 @@ export class EnquetesService {
   }
 
   async vote(body: CreateVotoDto) {
-    const enquete = await this.prisma.enquete.findUnique({
-      where: { id: BigInt(body.pollId) },
-      include: { usuario: true, opcoes: true },
-    });
-
-    if (!enquete) {
-      throw new BadRequestException('Poll not found.');
-    }
-
-    const optionId = BigInt(body.optionId);
-    const opcao = enquete.opcoes.find(({ id }) => id === optionId);
-
-    if (opcao) {
-      const updated = await this.prisma.opcao.update({
-        where: { id: opcao.id },
-        data: { votes: (opcao.votes ?? 0n) + 1n },
+    return this.prisma.$transaction(async (transaction) => {
+      const pollId = BigInt(body.pollId);
+      const enquete = await transaction.enquete.findUnique({
+        where: { id: pollId },
+        include: { usuario: true, opcoes: true },
       });
-      enquete.opcoes = enquete.opcoes.map((item) =>
-        item.id === updated.id ? updated : item,
-      );
-    }
 
-    return this.toResponse(enquete);
+      if (!enquete) {
+        throw new BadRequestException('Poll not found.');
+      }
+
+      const updated = await transaction.opcao.updateMany({
+        where: { id: BigInt(body.optionId), enqueteId: pollId },
+        data: { votes: { increment: 1 } },
+      });
+
+      if (updated.count === 0) {
+        throw new BadRequestException('Option not found in poll.');
+      }
+
+      const result = await transaction.enquete.findUniqueOrThrow({
+        where: { id: pollId },
+        include: { usuario: true, opcoes: true },
+      });
+
+      return this.toResponse(result);
+    });
   }
 
   private toResponse(enquete: EnqueteCompleta) {

@@ -7,16 +7,18 @@ import { PrismaService } from '../src/prisma/prisma.service';
 describe('Enquetes API', () => {
   let app: INestApplication;
   const prisma = {
+    $transaction: jest.fn(),
     usuario: {
       findUnique: jest.fn(),
     },
     enquete: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
       create: jest.fn(),
     },
     opcao: {
-      update: jest.fn(),
+      updateMany: jest.fn(),
     },
   };
   const usuario = { id: 1n, name: 'Will' };
@@ -36,6 +38,10 @@ describe('Enquetes API', () => {
   };
 
   beforeAll(async () => {
+    prisma.$transaction.mockImplementation(
+      (operation: (transaction: typeof prisma) => unknown) =>
+        operation(prisma),
+    );
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(prisma)
@@ -150,31 +156,31 @@ describe('Enquetes API', () => {
       .expect(400);
   });
 
-  it('preserves the poll when the option does not belong to it', async () => {
+  it('rejects an option that does not belong to the poll', async () => {
     prisma.enquete.findUnique.mockResolvedValue({
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
+    prisma.opcao.updateMany.mockResolvedValue({ count: 0 });
 
     await request(app.getHttpServer())
       .post('/polls/vote')
       .send({ pollId: 10, optionId: 999 })
-      .expect(200)
-      .expect((response) => {
-        expect(response.body.options[0].votes).toBe(0);
-      });
-
-    expect(prisma.opcao.update).not.toHaveBeenCalled();
+      .expect(400);
   });
 
-  it('increments the selected option', async () => {
+  it('increments the selected option atomically', async () => {
     prisma.enquete.findUnique.mockResolvedValue({
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
-    prisma.opcao.update.mockResolvedValue({
-      ...enquete.opcoes[0],
-      votes: 1n,
+    prisma.opcao.updateMany.mockResolvedValue({ count: 1 });
+    prisma.enquete.findUniqueOrThrow.mockResolvedValue({
+      ...enquete,
+      opcoes: [
+        { ...enquete.opcoes[0], votes: 1n },
+        enquete.opcoes[1],
+      ],
     });
 
     await request(app.getHttpServer())
@@ -184,5 +190,10 @@ describe('Enquetes API', () => {
       .expect((response) => {
         expect(response.body.options[0].votes).toBe(1);
       });
+
+    expect(prisma.opcao.updateMany).toHaveBeenCalledWith({
+      where: { id: 20n, enqueteId: 10n },
+      data: { votes: { increment: 1 } },
+    });
   });
 });
