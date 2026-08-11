@@ -1,18 +1,46 @@
-import { Allow } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateEnqueteDto {
-  @Allow()
-  title?: string;
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsNotEmpty()
+  title!: string;
 
-  @Allow()
-  options?: string[];
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map((option) =>
+          typeof option === 'string' ? option.trim() : option,
+        )
+      : value,
+  )
+  @IsArray()
+  @ArrayMinSize(2)
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  options!: string[];
 
-  @Allow()
+  @IsOptional()
+  @IsBoolean()
   voteRequireLogin?: boolean;
 
-  @Allow()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   pollExpirationInDays?: number;
 
-  @Allow()
-  userId?: number;
+  @IsInt()
+  @Min(1)
+  userId!: number;
 }

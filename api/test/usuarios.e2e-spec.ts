@@ -58,4 +58,11 @@ describe('Usuarios API', () => {
       .expect(200)
       .expect({ id: 2, name: 'Ana' });
   });
+
+  it('rejects a blank user name', async () => {
+    await request(app.getHttpServer())
+      .post('/user')
+      .send({ name: '   ' })
+      .expect(400);
+  });
 });

@@ -22,18 +22,6 @@ export class EnquetesService {
   }
 
   async create(body: CreateEnqueteDto) {
-    if (
-      body.title == null ||
-      body.title.length === 0 ||
-      body.options == null ||
-      body.options.length < 2 ||
-      body.userId == null
-    ) {
-      throw new BadRequestException(
-        'Invalid poll data. Title and at least two options are required.',
-      );
-    }
-
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: BigInt(body.userId) },
     });
@@ -80,16 +68,12 @@ export class EnquetesService {
 
   async vote(body: CreateVotoDto) {
     const enquete = await this.prisma.enquete.findUnique({
-      where: { id: BigInt(body.pollId ?? 0) },
+      where: { id: BigInt(body.pollId) },
       include: { usuario: true, opcoes: true },
     });
 
     if (!enquete) {
       throw new BadRequestException('Poll not found.');
-    }
-
-    if (body.optionId == null) {
-      throw new BadRequestException('Option ID is required to vote.');
     }
 
     const optionId = BigInt(body.optionId);

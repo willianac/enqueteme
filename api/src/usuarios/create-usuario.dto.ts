@@ -1,6 +1,11 @@
-import { Allow } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateUsuarioDto {
-  @Allow()
-  name?: string;
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
 }

@@ -6,9 +6,9 @@ import { toSafeNumber } from '../prisma/to-safe-number';
 export class UsuariosService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOrCreate(name?: string) {
+  async findOrCreate(name: string) {
     const existing = await this.prisma.usuario.findFirst({
-      where: { name: name ?? null },
+      where: { name },
     });
     const usuario =
       existing ?? (await this.prisma.usuario.create({ data: { name } }));

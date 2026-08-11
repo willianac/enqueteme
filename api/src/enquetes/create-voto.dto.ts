@@ -1,12 +1,16 @@
-import { Allow } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreateVotoDto {
-  @Allow()
-  pollId?: number;
+  @IsInt()
+  @Min(1)
+  pollId!: number;
 
-  @Allow()
-  optionId?: number;
+  @IsInt()
+  @Min(1)
+  optionId!: number;
 
-  @Allow()
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   userId?: number;
 }

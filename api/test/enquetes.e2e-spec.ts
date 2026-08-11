@@ -85,6 +85,18 @@ describe('Enquetes API', () => {
       .expect(400);
   });
 
+  it('rejects blank options and non-positive duration', async () => {
+    await request(app.getHttpServer())
+      .post('/polls')
+      .send({
+        title: 'Question',
+        options: ['A', '   '],
+        pollExpirationInDays: 0,
+        userId: 1,
+      })
+      .expect(400);
+  });
+
   it('rejects an unknown user', async () => {
     prisma.usuario.findUnique.mockResolvedValue(null);
 
