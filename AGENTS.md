@@ -16,6 +16,7 @@ cd api && npm ci                  # install locked API dependencies
 cd api && npm run start:dev       # run NestJS with reload on port 8080
 cd api && npm test                # run Jest/Supertest API tests
 cd api && npm run build           # generate Prisma Client and compile NestJS
+docker compose down --volumes     # one-time Spring-to-Nest cutover; removes the disposable DB
 docker compose up --build         # run the complete application
 
 cd web && npm ci                  # install locked frontend dependencies
