@@ -103,6 +103,13 @@ describe('Enquetes API', () => {
       .expect(400);
   });
 
+  it('rejects identifiers outside JavaScript safe integer range', async () => {
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: Number.MAX_SAFE_INTEGER + 1, optionId: 20 })
+      .expect(400);
+  });
+
   it('rejects an unknown user', async () => {
     prisma.usuario.findUnique.mockResolvedValue(null);
 
