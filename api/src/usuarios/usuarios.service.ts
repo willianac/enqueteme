@@ -7,11 +7,11 @@ export class UsuariosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findOrCreate(name: string) {
-    const existing = await this.prisma.usuario.findFirst({
+    const usuario = await this.prisma.usuario.upsert({
       where: { name },
+      update: {},
+      create: { name },
     });
-    const usuario =
-      existing ?? (await this.prisma.usuario.create({ data: { name } }));
 
     return {
       id: toSafeNumber(usuario.id),

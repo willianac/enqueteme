@@ -10,7 +10,7 @@ datasource db {
 
 model Usuario {
   id       BigInt    @id @default(autoincrement())
-  name     String?   @db.VarChar(255)
+  name     String?   @unique @db.VarChar(255)
   enquetes Enquete[]
 
   @@map("usuarios")

@@ -8,8 +8,7 @@ describe('Usuarios API', () => {
   let app: INestApplication;
   const prisma = {
     usuario: {
-      findFirst: jest.fn(),
-      create: jest.fn(),
+      upsert: jest.fn(),
     },
   };
 
@@ -37,7 +36,7 @@ describe('Usuarios API', () => {
   });
 
   it('returns an existing user with the same name', async () => {
-    prisma.usuario.findFirst.mockResolvedValue({ id: 1n, name: 'Will' });
+    prisma.usuario.upsert.mockResolvedValue({ id: 1n, name: 'Will' });
 
     await request(app.getHttpServer())
       .post('/user')
@@ -45,12 +44,15 @@ describe('Usuarios API', () => {
       .expect(200)
       .expect({ id: 1, name: 'Will' });
 
-    expect(prisma.usuario.create).not.toHaveBeenCalled();
+    expect(prisma.usuario.upsert).toHaveBeenCalledWith({
+      where: { name: 'Will' },
+      update: {},
+      create: { name: 'Will' },
+    });
   });
 
   it('creates a user when the name is new', async () => {
-    prisma.usuario.findFirst.mockResolvedValue(null);
-    prisma.usuario.create.mockResolvedValue({ id: 2n, name: 'Ana' });
+    prisma.usuario.upsert.mockResolvedValue({ id: 2n, name: 'Ana' });
 
     await request(app.getHttpServer())
       .post('/user')
