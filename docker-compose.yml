@@ -20,6 +20,10 @@ services:
     environment:
       DATABASE_URL: 'mysql://will:will2009@db:3306/enqueteme'
       PORT: '8080'
+      GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID:-}'
+      GOOGLE_CLIENT_SECRET: '${GOOGLE_CLIENT_SECRET:-}'
+      GOOGLE_CALLBACK_URL: '${GOOGLE_CALLBACK_URL:-http://localhost:4200/api/auth/google/callback}'
+      WEB_URL: '${WEB_URL:-http://localhost:4200}'
     depends_on:
       db:
         condition: service_healthy

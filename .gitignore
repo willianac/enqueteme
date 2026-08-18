@@ -14,6 +14,7 @@
 /api/dist
 /api/src/generated
 /api/.env
+/.env
 /api/*.tsbuildinfo
 
 # Visual Studio Code

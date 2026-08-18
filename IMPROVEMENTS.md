@@ -8,10 +8,7 @@ trustworthy, then improve the product experience and production reliability.
 
 ### 1. Add real authentication and persistent sessions
 
-The current sign-in flow only finds or creates a user by name, and the frontend
-forgets the user after a refresh. Add an authentication method such as a
-passwordless email link, OAuth, or username and password, backed by secure
-cookies.
+Implemented with Google OIDC and 30-day database-backed, HTTP-only sessions.
 
 ### 2. Enforce voting rules in the API
 

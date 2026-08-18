@@ -13,10 +13,12 @@ This repository has a NestJS API and Angular frontend:
 ```bash
 docker compose up -d db           # start local MySQL
 cd api && npm ci                  # install locked API dependencies
+cp api/.env.example api/.env      # add Google credentials for local API development
 cd api && npm run start:dev       # run NestJS with reload on port 8080
 cd api && npm test                # run Jest/Supertest API tests
 cd api && npm run build           # generate Prisma Client and compile NestJS
 docker compose down --volumes     # one-time Spring-to-Nest cutover; removes the disposable DB
+cp .env.example .env              # add Google credentials for Compose
 docker compose up --build         # run the complete application
 
 cd web && npm ci                  # install locked frontend dependencies
