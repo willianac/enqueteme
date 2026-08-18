@@ -1,12 +1,20 @@
-FROM maven:3.9-eclipse-temurin-25-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
-COPY pom.xml ./
-RUN mvn dependency:go-offline
+COPY package*.json ./
+RUN npm ci
+COPY nest-cli.json prisma.config.ts tsconfig*.json ./
+COPY prisma ./prisma
 COPY src ./src
-RUN mvn package -DskipTests && cp target/*.jar app.jar
+RUN npm run build
 
-FROM eclipse-temurin:25-jre-alpine
+FROM node:22-alpine
 WORKDIR /app
-COPY --from=build /app/app.jar app.jar
+ENV NODE_ENV=production
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist ./dist
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+USER node
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["npm", "run", "start:prod"]
