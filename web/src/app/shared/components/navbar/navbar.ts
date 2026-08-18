@@ -12,5 +12,9 @@ import { CommonModule } from '@angular/common';
 })
 export class Navbar {
   readonly userApi = inject(UserApi);
-  protected user = this.userApi.user();
+  protected readonly user = this.userApi.user;
+
+  protected logout() {
+    this.userApi.logout().subscribe();
+  }
 }

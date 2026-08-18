@@ -1,0 +1,40 @@
+{
+  "name": "enqueteme-api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "prisma generate && nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "prisma migrate deploy && node dist/main.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.29",
+    "@nestjs/core": "^11.1.29",
+    "@nestjs/platform-express": "^11.1.29",
+    "@prisma/adapter-mariadb": "7.9.1",
+    "@prisma/client": "7.9.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "google-auth-library": "^11.0.2",
+    "prisma": "7.9.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/testing": "^11.1.29",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.10.1",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.9.3"
+  }
+}

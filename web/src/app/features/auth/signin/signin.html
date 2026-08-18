@@ -5,30 +5,24 @@
     <header tuiHeader>
       <h1 tuiTitle>
         Entrar
-        <span tuiSubtitle>Para entrar é bem simples, basta digitar seu nome</span>
+        <span tuiSubtitle>Use sua conta Google para continuar</span>
       </h1>
       <aside tuiAccessories>
         <tui-avatar appearance="primary" src="@tui.star" />
       </aside>
     </header>
 
-    <section>
-      <tui-textfield iconStart="@tui.user">
-        <label tuiLabel>John Doe</label>
-        <input [(ngModel)]="name" type="text" tuiTextfield />
-      </tui-textfield>
-      <tui-error [error]="nameError" />
-    </section>
+    @if (loginFailed) {
+      <p class="login-error">Não foi possível entrar com o Google. Tente novamente.</p>
+    }
 
     <footer>
-      <button 
+      <a
+        href="/api/auth/google"
         size="m" 
         style="width: 100%;" 
-        tuiButton type="button" 
-        (click)="signIn()" 
-        [loading]="loading"
-      >Entrar
-    </button>
+        tuiButton
+      >Continuar com o Google</a>
       <button 
         size="m" 
         style="width: 100%;" 
@@ -36,7 +30,6 @@
         tuiButton 
         type="button" 
         routerLink="/polls" 
-        [disabled]="loading"
       >Voltar às enquetes
     </button>
     </footer>
