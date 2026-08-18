@@ -15,6 +15,7 @@ model Usuario {
   name          String    @db.VarChar(255)
   enquetes      Enquete[]
   sessoes       Sessao[]
+  votos         Voto[]
 
   @@map("usuarios")
 }
@@ -41,6 +42,7 @@ model Enquete {
   usuarioId        BigInt?   @map("usuario_id")
   usuario          Usuario?  @relation(fields: [usuarioId], references: [id])
   opcoes           Opcao[]
+  votos            Voto[]
 
   @@index([usuarioId])
   @@map("enquetes")
@@ -52,7 +54,25 @@ model Opcao {
   votes     BigInt?  @default(0) @map("qtde_votos")
   enqueteId BigInt?  @map("enquete_id")
   enquete   Enquete? @relation(fields: [enqueteId], references: [id])
+  votos     Voto[]
 
   @@index([enqueteId])
   @@map("opcoes")
+}
+
+model Voto {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
+  enqueteId BigInt   @map("enquete_id")
+  opcaoId   BigInt   @map("opcao_id")
+  usuarioId BigInt?  @map("usuario_id")
+  enquete   Enquete  @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
+  opcao     Opcao    @relation(fields: [opcaoId], references: [id], onDelete: Cascade)
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([enqueteId, usuarioId])
+  @@index([enqueteId])
+  @@index([opcaoId])
+  @@index([usuarioId])
+  @@map("votos")
 }

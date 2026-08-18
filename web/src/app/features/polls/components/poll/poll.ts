@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
@@ -79,8 +80,27 @@ export class Poll implements OnChanges {
         this.idOptionChosen = this.pollForm.getRawValue().option
         this.voted = true
         this.cdr.detectChanges();
-      }
+      },
+      error: (error: HttpErrorResponse) => {
+        this.alerts.open(
+          this.voteErrorMessage(error),
+          { label: 'Não foi possível votar', appearance: 'negative' },
+        ).subscribe();
+      },
     })
+  }
+
+  private voteErrorMessage(error: HttpErrorResponse) {
+    if (error.status === 401) {
+      return 'É preciso fazer o login antes de votar nesta enquete.';
+    }
+    if (error.status === 409) {
+      return 'Você já votou nesta enquete.';
+    }
+    if (error.status === 400 && error.error?.message === 'Poll has expired.') {
+      return 'Esta enquete já expirou.';
+    }
+    return 'Não foi possível registrar o voto. Tente novamente.';
   }
 
   private returnOptionsWithPercentageAndColors(poll: PollType) {
