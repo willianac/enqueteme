@@ -35,7 +35,7 @@ describe('Enquetes API', () => {
     createdAt: new Date('2026-08-11T12:00:00.000Z'),
     updatedAt: new Date('2026-08-11T12:00:00.000Z'),
     voteRequireLogin: false,
-    expirationDate: new Date('2026-08-18T12:00:00.000Z'),
+    expirationDate: new Date('2026-08-25T12:00:00.000Z'),
     usuarioId: 1n,
     usuario,
     opcoes: [
@@ -91,7 +91,7 @@ describe('Enquetes API', () => {
           id: 10,
           title: 'Melhor framework?',
           creatorName: 'Will',
-          expirationDate: '2026-08-18T12:00:00.000Z',
+          expirationDate: '2026-08-25T12:00:00.000Z',
           voteRequireLogin: false,
           options: [
             { id: 20, name: 'NestJS', votes: 0 },
@@ -167,6 +167,20 @@ describe('Enquetes API', () => {
       .post('/polls/vote')
       .send({ pollId: 999, optionId: 20 })
       .expect(400);
+  });
+
+  it('rejects a vote after the poll expires', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      expirationDate: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 20 })
+      .expect(400);
+
+    expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
   it('rejects a vote without an option', async () => {

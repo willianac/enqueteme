@@ -75,6 +75,10 @@ export class EnquetesService {
         throw new BadRequestException('Poll not found.');
       }
 
+      if (enquete.expirationDate && enquete.expirationDate <= new Date()) {
+        throw new BadRequestException('Poll has expired.');
+      }
+
       if (enquete.voteRequireLogin && !usuario) {
         throw new UnauthorizedException();
       }
