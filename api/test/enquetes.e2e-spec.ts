@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import cookieParser = require('cookie-parser');
 import request = require('supertest');
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
@@ -8,7 +9,8 @@ describe('Enquetes API', () => {
   let app: INestApplication;
   const prisma = {
     $transaction: jest.fn(),
-    usuario: {
+    sessao: {
+      delete: jest.fn(),
       findUnique: jest.fn(),
     },
     enquete: {
@@ -21,7 +23,12 @@ describe('Enquetes API', () => {
       updateMany: jest.fn(),
     },
   };
-  const usuario = { id: 1n, name: 'Will' };
+  const usuario = {
+    id: 1n,
+    googleSubject: 'google-123',
+    email: 'will@example.com',
+    name: 'Will',
+  };
   const enquete = {
     id: 10n,
     title: 'Melhor framework?',
@@ -48,13 +55,23 @@ describe('Enquetes API', () => {
       .compile();
 
     app = module.createNestApplication();
+    app.use(cookieParser());
     app.useGlobalPipes(
       new ValidationPipe({ transform: true, whitelist: true }),
     );
     await app.init();
   });
 
-  afterEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.sessao.findUnique.mockResolvedValue({
+      tokenHash: 'stored-hash',
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 60_000),
+      usuarioId: usuario.id,
+      usuario,
+    });
+  });
   afterAll(() => app.close());
 
   it('returns no content when there are no polls', async () => {
@@ -88,6 +105,7 @@ describe('Enquetes API', () => {
     await request(app.getHttpServer())
       .post('/polls')
       .send({ title: 'Only one option', options: ['NestJS'], userId: 1 })
+      .set('Cookie', 'enqueteme_session=valid-token')
       .expect(400);
   });
 
@@ -100,6 +118,7 @@ describe('Enquetes API', () => {
         pollExpirationInDays: 0,
         userId: 1,
       })
+      .set('Cookie', 'enqueteme_session=valid-token')
       .expect(400);
   });
 
@@ -110,17 +129,14 @@ describe('Enquetes API', () => {
       .expect(400);
   });
 
-  it('rejects an unknown user', async () => {
-    prisma.usuario.findUnique.mockResolvedValue(null);
-
+  it('rejects poll creation without a session', async () => {
     await request(app.getHttpServer())
       .post('/polls')
-      .send({ title: 'Question', options: ['A', 'B'], userId: 99 })
-      .expect(400);
+      .send({ title: 'Question', options: ['A', 'B'] })
+      .expect(401);
   });
 
-  it('creates a poll with a seven-day default expiration', async () => {
-    prisma.usuario.findUnique.mockResolvedValue(usuario);
+  it('creates a poll for the session user with a seven-day expiration', async () => {
     prisma.enquete.create.mockResolvedValue(enquete);
 
     await request(app.getHttpServer())
@@ -128,8 +144,9 @@ describe('Enquetes API', () => {
       .send({
         title: 'Melhor framework?',
         options: ['NestJS', 'Spring'],
-        userId: 1,
+        userId: 999,
       })
+      .set('Cookie', 'enqueteme_session=valid-token')
       .expect(201)
       .expect((response) => {
         expect(response.body.id).toBe(10);
@@ -140,6 +157,7 @@ describe('Enquetes API', () => {
     expect(data.expirationDate.getTime() - data.createdAt.getTime()).toBe(
       7 * 24 * 60 * 60 * 1000,
     );
+    expect(data.usuario).toEqual({ connect: { id: 1n } });
   });
 
   it('rejects a vote for an unknown poll', async () => {
@@ -202,5 +220,19 @@ describe('Enquetes API', () => {
       where: { id: 20n, enqueteId: 10n },
       data: { votes: { increment: 1 } },
     });
+  });
+
+  it('requires a session only when the poll requires login', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      voteRequireLogin: true,
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 20 })
+      .expect(401);
+
+    expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 });
