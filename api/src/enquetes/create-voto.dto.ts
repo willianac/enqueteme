@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, Max, Min } from 'class-validator';
 
 export class CreateVotoDto {
   @IsInt()
@@ -10,10 +10,4 @@ export class CreateVotoDto {
   @Min(1)
   @Max(Number.MAX_SAFE_INTEGER)
   optionId!: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(Number.MAX_SAFE_INTEGER)
-  userId?: number;
 }

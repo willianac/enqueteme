@@ -1,11 +1,29 @@
-import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { AuthService, SESSION_COOKIE } from '../auth/auth.service';
+import {
+  AuthenticatedRequest,
+  SessionGuard,
+} from '../auth/session.guard';
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
 import { EnquetesService } from './enquetes.service';
 
 @Controller('polls')
 export class EnquetesController {
-  constructor(private readonly enquetesService: EnquetesService) {}
+  constructor(
+    private readonly enquetesService: EnquetesService,
+    private readonly auth: AuthService,
+  ) {}
 
   @Get()
   async findAll(
@@ -22,13 +40,20 @@ export class EnquetesController {
   }
 
   @Post()
-  create(@Body() body: CreateEnqueteDto) {
-    return this.enquetesService.create(body);
+  @UseGuards(SessionGuard)
+  create(
+    @Body() body: CreateEnqueteDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.enquetesService.create(body, request.user);
   }
 
   @Post('vote')
   @HttpCode(200)
-  vote(@Body() body: CreateVotoDto) {
-    return this.enquetesService.vote(body);
+  async vote(@Body() body: CreateVotoDto, @Req() request: Request) {
+    const user = await this.auth.resolveSession(
+      request.cookies?.[SESSION_COOKIE] as string | undefined,
+    );
+    return this.enquetesService.vote(body, user);
   }
 }

@@ -7,7 +7,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  Max,
   Min,
 } from 'class-validator';
 
@@ -40,9 +39,4 @@ export class CreateEnqueteDto {
   @IsInt()
   @Min(1)
   pollExpirationInDays?: number;
-
-  @IsInt()
-  @Min(1)
-  @Max(Number.MAX_SAFE_INTEGER)
-  userId!: number;
 }

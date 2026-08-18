@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AuthenticatedUser } from '../auth/auth.service';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { toSafeNumber } from '../prisma/to-safe-number';
@@ -21,15 +26,7 @@ export class EnquetesService {
     return enquetes.map((enquete) => this.toResponse(enquete));
   }
 
-  async create(body: CreateEnqueteDto) {
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { id: BigInt(body.userId) },
-    });
-
-    if (!usuario) {
-      throw new BadRequestException('User not found.');
-    }
-
+  async create(body: CreateEnqueteDto, usuario: AuthenticatedUser) {
     const now = new Date();
     const expirationDate = new Date(now);
     expirationDate.setUTCDate(
@@ -43,7 +40,7 @@ export class EnquetesService {
         updatedAt: now,
         voteRequireLogin: body.voteRequireLogin ?? false,
         expirationDate,
-        usuario: { connect: { id: usuario.id } },
+        usuario: { connect: { id: BigInt(usuario.id) } },
         opcoes: {
           create: body.options.map((name) => ({ name, votes: 0n })),
         },
@@ -59,14 +56,14 @@ export class EnquetesService {
       voteRequireLogin: enquete.voteRequireLogin,
       expirationDate: enquete.expirationDate,
       user: {
-        id: toSafeNumber(usuario.id),
+        id: usuario.id,
         name: usuario.name,
       },
       options: this.options(enquete),
     };
   }
 
-  async vote(body: CreateVotoDto) {
+  async vote(body: CreateVotoDto, usuario: AuthenticatedUser | null) {
     return this.prisma.$transaction(async (transaction) => {
       const pollId = BigInt(body.pollId);
       const enquete = await transaction.enquete.findUnique({
@@ -76,6 +73,10 @@ export class EnquetesService {
 
       if (!enquete) {
         throw new BadRequestException('Poll not found.');
+      }
+
+      if (enquete.voteRequireLogin && !usuario) {
+        throw new UnauthorizedException();
       }
 
       const updated = await transaction.opcao.updateMany({
