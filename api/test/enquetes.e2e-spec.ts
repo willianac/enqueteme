@@ -19,12 +19,17 @@ describe('Enquetes API', () => {
       findUnique: jest.fn(),
       findUniqueOrThrow: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
     opcao: {
       updateMany: jest.fn(),
+      deleteMany: jest.fn(),
+      create: jest.fn(),
     },
     voto: {
       create: jest.fn(),
+      count: jest.fn(),
     },
   };
   const usuario = {
@@ -314,5 +319,276 @@ describe('Enquetes API', () => {
 
     expect(prisma.voto.create).not.toHaveBeenCalled();
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
+  });
+
+  describe('GET /polls/mine', () => {
+    it('returns 401 without session', async () => {
+      await request(app.getHttpServer()).get('/polls/mine').expect(401);
+    });
+
+    it('returns only the session users polls', async () => {
+      prisma.enquete.findMany.mockResolvedValue([enquete]);
+
+      await request(app.getHttpServer())
+        .get('/polls/mine')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toHaveLength(1);
+          expect(response.body[0].id).toBe(10);
+        });
+
+      expect(prisma.enquete.findMany).toHaveBeenCalledWith({
+        where: { usuarioId: 1n },
+        include: { usuario: true, opcoes: true },
+      });
+    });
+  });
+
+  describe('PATCH /polls/:id/close', () => {
+    it('returns 401 without session', async () => {
+      await request(app.getHttpServer())
+        .patch('/polls/10/close')
+        .expect(401);
+    });
+
+    it('returns 404 when poll does not exist', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .patch('/polls/999/close')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(404);
+    });
+
+    it('returns 403 when user is not the owner', async () => {
+      prisma.enquete.findUnique.mockResolvedValue({
+        ...enquete,
+        usuarioId: 999n,
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10/close')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(403);
+    });
+
+    it('sets expirationDate to now', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        expirationDate: new Date(),
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10/close')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200);
+
+      expect(prisma.enquete.update).toHaveBeenCalledWith({
+        where: { id: 10n },
+        data: expect.objectContaining({
+          expirationDate: expect.any(Date),
+          updatedAt: expect.any(Date),
+        }),
+        include: { usuario: true, opcoes: true },
+      });
+    });
+
+    it('is idempotent when already expired', async () => {
+      const expiredDate = new Date('2020-01-01T00:00:00.000Z');
+      prisma.enquete.findUnique.mockResolvedValue({
+        ...enquete,
+        expirationDate: expiredDate,
+      });
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        expirationDate: expiredDate,
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10/close')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200);
+    });
+  });
+
+  describe('DELETE /polls/:id', () => {
+    it('returns 401 without session', async () => {
+      await request(app.getHttpServer())
+        .delete('/polls/10')
+        .expect(401);
+    });
+
+    it('returns 404 when poll does not exist', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .delete('/polls/999')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(404);
+    });
+
+    it('returns 403 when user is not the owner', async () => {
+      prisma.enquete.findUnique.mockResolvedValue({
+        ...enquete,
+        usuarioId: 999n,
+      });
+
+      await request(app.getHttpServer())
+        .delete('/polls/10')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(403);
+    });
+
+    it('deletes the poll and returns 204', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.enquete.delete.mockResolvedValue(enquete);
+
+      await request(app.getHttpServer())
+        .delete('/polls/10')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(204);
+
+      expect(prisma.enquete.delete).toHaveBeenCalledWith({
+        where: { id: 10n },
+      });
+    });
+  });
+
+  describe('PATCH /polls/:id', () => {
+    it('returns 401 without session', async () => {
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({ title: 'New title', options: ['A', 'B'] })
+        .expect(401);
+    });
+
+    it('returns 404 when poll does not exist', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(null);
+
+      await request(app.getHttpServer())
+        .patch('/polls/999')
+        .send({ title: 'New title', options: ['A', 'B'] })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(404);
+    });
+
+    it('returns 403 when user is not the owner', async () => {
+      prisma.enquete.findUnique.mockResolvedValue({
+        ...enquete,
+        usuarioId: 999n,
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({ title: 'New title', options: ['A', 'B'] })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(403);
+    });
+
+    it('returns 409 when poll already has votes', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(5);
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({ title: 'New title', options: ['A', 'B'] })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(409);
+
+      expect(prisma.enquete.update).not.toHaveBeenCalled();
+    });
+
+    it('updates title and options when zero votes', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(0);
+      prisma.opcao.deleteMany.mockResolvedValue({ count: 2 });
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        title: 'New title',
+        opcoes: [
+          { id: 30n, name: 'Option A', votes: 0n, enqueteId: 10n },
+          { id: 31n, name: 'Option B', votes: 0n, enqueteId: 10n },
+        ],
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({ title: 'New title', options: ['Option A', 'Option B'] })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body.title).toBe('New title');
+          expect(response.body.options).toHaveLength(2);
+        });
+
+      expect(prisma.opcao.deleteMany).toHaveBeenCalledWith({
+        where: { enqueteId: 10n },
+      });
+    });
+
+    it('updates voteRequireLogin flag', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(0);
+      prisma.opcao.deleteMany.mockResolvedValue({ count: 2 });
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        voteRequireLogin: true,
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({
+          title: 'New title',
+          options: ['A', 'B'],
+          voteRequireLogin: true,
+        })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200);
+
+      expect(prisma.enquete.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            voteRequireLogin: true,
+          }),
+        }),
+      );
+    });
+
+    it('recomputes expirationDate when pollExpirationInDays is provided', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(0);
+      prisma.opcao.deleteMany.mockResolvedValue({ count: 2 });
+      prisma.enquete.update.mockResolvedValue(enquete);
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({
+          title: 'New title',
+          options: ['A', 'B'],
+          pollExpirationInDays: 14,
+        })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200);
+
+      expect(prisma.enquete.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            expirationDate: expect.any(Date),
+          }),
+        }),
+      );
+    });
+
+    it('returns 400 for invalid body', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({ title: '', options: ['A'] })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(400);
+    });
   });
 });
