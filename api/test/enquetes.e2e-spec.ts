@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Prisma } from '../src/generated/prisma/client';
 import cookieParser = require('cookie-parser');
 import request = require('supertest');
 import { AppModule } from '../src/app.module';
@@ -21,6 +22,9 @@ describe('Enquetes API', () => {
     },
     opcao: {
       updateMany: jest.fn(),
+    },
+    voto: {
+      create: jest.fn(),
     },
   };
   const usuario = {
@@ -200,19 +204,22 @@ describe('Enquetes API', () => {
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
-    prisma.opcao.updateMany.mockResolvedValue({ count: 0 });
 
     await request(app.getHttpServer())
       .post('/polls/vote')
       .send({ pollId: 10, optionId: 999 })
       .expect(400);
+
+    expect(prisma.voto.create).not.toHaveBeenCalled();
+    expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
-  it('increments the selected option atomically', async () => {
+  it('records an anonymous vote and increments the selected option', async () => {
     prisma.enquete.findUnique.mockResolvedValue({
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
+    prisma.voto.create.mockResolvedValue({ id: 1n });
     prisma.opcao.updateMany.mockResolvedValue({ count: 1 });
     prisma.enquete.findUniqueOrThrow.mockResolvedValue({
       ...enquete,
@@ -230,10 +237,68 @@ describe('Enquetes API', () => {
         expect(response.body.options[0].votes).toBe(1);
       });
 
+    expect(prisma.voto.create).toHaveBeenCalledWith({
+      data: {
+        enqueteId: 10n,
+        opcaoId: 20n,
+        usuarioId: null,
+      },
+    });
     expect(prisma.opcao.updateMany).toHaveBeenCalledWith({
       where: { id: 20n, enqueteId: 10n },
       data: { votes: { increment: 1 } },
     });
+  });
+
+  it('records an authenticated vote with the session user', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      opcoes: [...enquete.opcoes],
+    });
+    prisma.voto.create.mockResolvedValue({ id: 2n });
+    prisma.opcao.updateMany.mockResolvedValue({ count: 1 });
+    prisma.enquete.findUniqueOrThrow.mockResolvedValue({
+      ...enquete,
+      opcoes: [
+        { ...enquete.opcoes[0], votes: 1n },
+        enquete.opcoes[1],
+      ],
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 20 })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(200);
+
+    expect(prisma.voto.create).toHaveBeenCalledWith({
+      data: {
+        enqueteId: 10n,
+        opcaoId: 20n,
+        usuarioId: 1n,
+      },
+    });
+  });
+
+  it('rejects a second authenticated vote on the same poll', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      opcoes: [...enquete.opcoes],
+    });
+    prisma.voto.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '7.9.1',
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionId: 20 })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(409);
+
+    expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
   it('requires a session only when the poll requires login', async () => {
@@ -247,6 +312,7 @@ describe('Enquetes API', () => {
       .send({ pollId: 10, optionId: 20 })
       .expect(401);
 
+    expect(prisma.voto.create).not.toHaveBeenCalled();
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 });

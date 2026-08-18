@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -66,6 +67,7 @@ export class EnquetesService {
   async vote(body: CreateVotoDto, usuario: AuthenticatedUser | null) {
     return this.prisma.$transaction(async (transaction) => {
       const pollId = BigInt(body.pollId);
+      const optionId = BigInt(body.optionId);
       const enquete = await transaction.enquete.findUnique({
         where: { id: pollId },
         include: { usuario: true, opcoes: true },
@@ -83,14 +85,35 @@ export class EnquetesService {
         throw new UnauthorizedException();
       }
 
-      const updated = await transaction.opcao.updateMany({
-        where: { id: BigInt(body.optionId), enqueteId: pollId },
-        data: { votes: { increment: 1 } },
-      });
-
-      if (updated.count === 0) {
+      const optionBelongsToPoll = enquete.opcoes.some(
+        (opcao) => opcao.id === optionId,
+      );
+      if (!optionBelongsToPoll) {
         throw new BadRequestException('Option not found in poll.');
       }
+
+      try {
+        await transaction.voto.create({
+          data: {
+            enqueteId: pollId,
+            opcaoId: optionId,
+            usuarioId: usuario ? BigInt(usuario.id) : null,
+          },
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new ConflictException('User has already voted on this poll.');
+        }
+        throw error;
+      }
+
+      await transaction.opcao.updateMany({
+        where: { id: optionId, enqueteId: pollId },
+        data: { votes: { increment: 1 } },
+      });
 
       const result = await transaction.enquete.findUniqueOrThrow({
         where: { id: pollId },
