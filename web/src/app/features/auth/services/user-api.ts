@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { catchError, Observable, of, tap } from 'rxjs';
 
-type User = {
+export type User = {
   id: number;
   name: string;
+  email: string;
 }
 
 @Injectable({
@@ -16,9 +17,19 @@ export class UserApi {
 
   public readonly user = signal<User | null>(null);
   
-  public signIn(name: string): Observable<User> {
-    return this.http.post<User>(this.apiUrl + "user", { name }).pipe(
-      tap((res) => this.user.set(res))
-    )
+  public restore(): Observable<User | null> {
+    return this.http.get<User>(this.apiUrl + 'auth/me').pipe(
+      tap((res) => this.user.set(res)),
+      catchError(() => {
+        this.user.set(null);
+        return of(null);
+      })
+    );
+  }
+
+  public logout(): Observable<void> {
+    return this.http.post<void>(this.apiUrl + 'auth/logout', {}).pipe(
+      tap(() => this.user.set(null))
+    );
   }
 }

@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { UserApi } from '../../auth/services/user-api';
 import { PollType } from '../../../shared/types/Poll';
 import { Observable } from 'rxjs';
 
@@ -30,19 +29,15 @@ type SetVoteRequest = {
 })
 export class PollApi {
   http = inject(HttpClient);
-  userApi = inject(UserApi);
 
   private apiUrl = '/api/';
 
   public createPoll(createPollRequest: CreatePollRequest) {
-    const user = this.userApi.user()
-
     return this.http.post<CreatePollResponse>(`${this.apiUrl}polls`, { 
       title: createPollRequest.title, 
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
       pollExpirationInDays: createPollRequest.durationDays,
-      userId: user?.id
     });
   }
 
@@ -51,11 +46,9 @@ export class PollApi {
   }
 
   public setVote(setVoteRequest: SetVoteRequest): Observable<PollType> {
-    const user = this.userApi.user()
     return this.http.post<PollType>(`${this.apiUrl}polls/vote`, {
       pollId: setVoteRequest.pollId,
       optionId: setVoteRequest.optionId,
-      userId: user?.id
     })
   }
 }
