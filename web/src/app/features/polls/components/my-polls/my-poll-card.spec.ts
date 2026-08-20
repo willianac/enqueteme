@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { MyPollCard } from './my-poll-card';
 import { PollType } from '../../../../shared/types/Poll';
+import { TuiDialogService } from '@taiga-ui/core';
 
 describe('MyPollCard', () => {
   let fixture: ComponentFixture<MyPollCard>;
   let component: MyPollCard;
+  let mockDialogs: { open: ReturnType<typeof vi.fn> };
 
   const activePoll: PollType = {
     id: 1,
@@ -25,8 +28,11 @@ describe('MyPollCard', () => {
   };
 
   beforeEach(async () => {
+    mockDialogs = { open: vi.fn(() => of(true)) };
+
     await TestBed.configureTestingModule({
       imports: [MyPollCard],
+      providers: [{ provide: TuiDialogService, useValue: mockDialogs }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyPollCard);
@@ -41,7 +47,7 @@ describe('MyPollCard', () => {
     expect(el.textContent).toContain('Minha enquete');
     expect(el.textContent).toContain('Opção A');
     expect(el.textContent).toContain('Opção B');
-    expect(el.textContent).toContain('8 voto(s)');
+    expect(el.textContent).toContain('8 votos');
   });
 
   it('emits edit, close, and delete outputs', () => {
@@ -61,7 +67,6 @@ describe('MyPollCard', () => {
     component.onClose();
     expect(closeSpy).toHaveBeenCalledWith(1);
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     component.onDelete();
     expect(deleteSpy).toHaveBeenCalledWith(1);
   });
@@ -76,5 +81,17 @@ describe('MyPollCard', () => {
       b.textContent?.includes('Encerrar'),
     ) as HTMLButtonElement;
     expect(closeBtn.disabled).toBe(true);
+  });
+
+  it('does not emit delete when dialog is cancelled', () => {
+    mockDialogs.open.mockReturnValue(of(false));
+    fixture.componentRef.setInput('pollData', activePoll);
+    fixture.detectChanges();
+
+    const deleteSpy = vi.fn();
+    component.delete.subscribe(deleteSpy);
+
+    component.onDelete();
+    expect(deleteSpy).not.toHaveBeenCalled();
   });
 });

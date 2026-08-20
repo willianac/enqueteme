@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { PollType } from '../../../../shared/types/Poll';
 import { PollApi } from '../../services/poll-api';
@@ -9,7 +9,7 @@ import { TuiButton } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-my-polls',
-  imports: [CommonModule, Navbar, MyPollCard, TuiButton],
+  imports: [CommonModule, Navbar, MyPollCard, TuiButton, RouterLink],
   templateUrl: './my-polls.html',
   styleUrl: './my-polls.less',
 })

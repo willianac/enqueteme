@@ -11,7 +11,10 @@
       <button tuiButton appearance="primary" size="m" (click)="loadPolls()">Tentar novamente</button>
     </div>
   } @else if (polls().length === 0) {
-    <p class="state-message">Nenhuma enquete encontrada.</p>
+    <div class="state-message empty-state">
+      <p>Nenhuma enquete encontrada.</p>
+      <button tuiButton appearance="primary" size="m" routerLink="/new-poll">Criar enquete</button>
+    </div>
   } @else {
     <div class="poll-list">
       @for (poll of polls(); track poll.id) {
