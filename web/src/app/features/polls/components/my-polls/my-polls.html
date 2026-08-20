@@ -1,0 +1,30 @@
+<app-navbar></app-navbar>
+
+<main class="content">
+  <h1 class="page-title">Minhas Enquetes</h1>
+
+  @if (loading()) {
+    <p class="state-message">Carregando enquetes...</p>
+  } @else if (error()) {
+    <div class="state-message error-state">
+      <p>Não foi possível carregar suas enquetes.</p>
+      <button tuiButton appearance="primary" size="m" (click)="loadPolls()">Tentar novamente</button>
+    </div>
+  } @else if (polls().length === 0) {
+    <div class="state-message empty-state">
+      <p>Nenhuma enquete encontrada.</p>
+      <button tuiButton appearance="primary" size="m" routerLink="/new-poll">Criar enquete</button>
+    </div>
+  } @else {
+    <div class="poll-list">
+      @for (poll of polls(); track poll.id) {
+        <app-my-poll-card
+          [pollData]="poll"
+          (edit)="onEdit($event)"
+          (close)="onClose($event)"
+          (delete)="onDelete($event)"
+        />
+      }
+    </div>
+  }
+</main>

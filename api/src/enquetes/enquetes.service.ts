@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthenticatedUser } from '../auth/auth.service';
@@ -10,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { toSafeNumber } from '../prisma/to-safe-number';
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
+import { UpdateEnqueteDto } from './update-enquete.dto';
 
 type EnqueteCompleta = Prisma.EnqueteGetPayload<{
   include: { usuario: true; opcoes: true };
@@ -25,6 +28,104 @@ export class EnquetesService {
     });
 
     return enquetes.map((enquete) => this.toResponse(enquete));
+  }
+
+  async findMine(usuario: AuthenticatedUser) {
+    const enquetes = await this.prisma.enquete.findMany({
+      where: { usuarioId: BigInt(usuario.id) },
+      include: { usuario: true, opcoes: true },
+    });
+
+    return enquetes.map((enquete) => this.toResponse(enquete));
+  }
+
+  async close(id: number, usuario: AuthenticatedUser) {
+    const enquete = await this.assertOwnedPoll(id, usuario.id);
+
+    const now = new Date();
+    const updated = await this.prisma.enquete.update({
+      where: { id: enquete.id },
+      data: { expirationDate: now, updatedAt: now },
+      include: { usuario: true, opcoes: true },
+    });
+
+    return this.toResponse(updated);
+  }
+
+  async remove(id: number, usuario: AuthenticatedUser) {
+    const enquete = await this.assertOwnedPoll(id, usuario.id);
+    await this.prisma.enquete.delete({ where: { id: enquete.id } });
+  }
+
+  async update(id: number, usuario: AuthenticatedUser, body: UpdateEnqueteDto) {
+    const enquete = await this.assertOwnedPoll(id, usuario.id);
+
+    const voteCount = await this.prisma.voto.count({
+      where: { enqueteId: enquete.id },
+    });
+
+    if (voteCount > 0) {
+      throw new ConflictException('Poll already has votes and cannot be edited.');
+    }
+
+    const now = new Date();
+    const updateData: {
+      title: string;
+      updatedAt: Date;
+      voteRequireLogin?: boolean;
+      expirationDate?: Date;
+    } = {
+      title: body.title,
+      updatedAt: now,
+    };
+
+    if (body.voteRequireLogin !== undefined) {
+      updateData.voteRequireLogin = body.voteRequireLogin;
+    }
+
+    if (body.pollExpirationInDays !== undefined) {
+      const expirationDate = new Date(now);
+      expirationDate.setUTCDate(
+        expirationDate.getUTCDate() + body.pollExpirationInDays,
+      );
+      updateData.expirationDate = expirationDate;
+    }
+
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.opcao.deleteMany({
+        where: { enqueteId: enquete.id },
+      });
+
+      const updated = await transaction.enquete.update({
+        where: { id: enquete.id },
+        data: {
+          ...updateData,
+          opcoes: {
+            create: body.options.map((name) => ({ name, votes: 0n })),
+          },
+        },
+        include: { usuario: true, opcoes: true },
+      });
+
+      return this.toResponse(updated);
+    });
+  }
+
+  private async assertOwnedPoll(id: number, userId: number) {
+    const enquete = await this.prisma.enquete.findUnique({
+      where: { id: BigInt(id) },
+      include: { usuario: true, opcoes: true },
+    });
+
+    if (!enquete) {
+      throw new NotFoundException('Poll not found.');
+    }
+
+    if (!enquete.usuarioId || enquete.usuarioId !== BigInt(userId)) {
+      throw new ForbiddenException('You do not own this poll.');
+    }
+
+    return enquete;
   }
 
   async create(body: CreateEnqueteDto, usuario: AuthenticatedUser) {

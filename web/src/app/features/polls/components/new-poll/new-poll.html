@@ -5,7 +5,7 @@
   <div class="new-poll-form">
     <div tuiPlatform="web">
       @if(!pollWasCreated) {
-      <div tuiCardLarge tuiTheme="dark" class="poll-card">
+      <div tuiCardLarge class="poll-card" tuiSurface="floating" >
         <header tuiHeader>
           <tui-icon icon="@tui.circle-user" />
           <small> Willian Almeida </small>
@@ -91,7 +91,7 @@
         </footer>
       </div>
       } @else {
-        <div tuiCardLarge tuiTheme="dark" class="poll-card success-card">
+        <div tuiCardLarge class="poll-card success-card">
           <section>
             <tui-icon icon="@tui.circle-check" [style.color]="'var(--tui-text-positive)'" class="icon"/>
             <h1 [style.color]="'var(--tui-text-positive)'" class="message">Enquete criada com sucesso!</h1>

@@ -1,0 +1,47 @@
+<div tuiCardLarge tuiSurface="floating" class="poll-card">
+  <div tuiHeader>
+    <h3 tuiTitle>
+      {{ pollData.title }}
+      @if (isExpired) {
+        <tui-chip size="xs" appearance="negative">Encerrada</tui-chip>
+      }
+      <span tuiSubtitle>Resumo da enquete:</span>
+    </h3>
+  </div>
+    <section>
+      <div class="options">
+        @for (option of pollData.options; track option.id; let i = $index) {
+          <div class="option-row">
+            <span class="option-name">{{ option.name }}</span>
+            <span class="option-votes">{{ pluralize(option.votes, 'voto', 'votos') }} ({{ votePercentage(option.votes) }}%)</span>
+          </div>
+          <progress
+            size="s"
+            tuiProgressBar
+            [max]="100"
+            [value]="votePercentage(option.votes)"
+            [color]="progressColor(i)"
+          ></progress>
+        }
+      </div>
+    </section>
+    <footer>
+      <div class="card-info">
+        <span>Total: {{ pluralize(totalVotes, 'voto', 'votos') }}</span>
+        @if (!isExpired) {
+          <span>{{ pluralize(daysRemaining, 'dia', 'dias') }} restante(s)</span>
+        }
+      </div>
+      <div class="card-actions">
+        <button tuiButton appearance="primary-grayscale" size="m" (click)="onEdit()">Editar</button>
+        <button
+          tuiButton
+          appearance="secondary"
+          size="m"
+          [disabled]="isExpired"
+          (click)="onClose()"
+        >Encerrar</button>
+        <button tuiButton appearance="secondary-destructive" size="m" class="btn-delete" (click)="onDelete()">Excluir</button>
+      </div>  
+    </footer>
+</div>

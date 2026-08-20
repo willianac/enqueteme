@@ -53,7 +53,7 @@ model Opcao {
   name      String?  @db.VarChar(255)
   votes     BigInt?  @default(0) @map("qtde_votos")
   enqueteId BigInt?  @map("enquete_id")
-  enquete   Enquete? @relation(fields: [enqueteId], references: [id])
+  enquete   Enquete? @relation(fields: [enqueteId], references: [id], onDelete: Cascade)
   votos     Voto[]
 
   @@index([enqueteId])

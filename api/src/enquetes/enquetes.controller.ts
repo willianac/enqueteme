@@ -1,8 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Req,
   Res,
@@ -17,6 +21,7 @@ import {
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
 import { EnquetesService } from './enquetes.service';
+import { UpdateEnqueteDto } from './update-enquete.dto';
 
 @Controller('polls')
 export class EnquetesController {
@@ -46,6 +51,41 @@ export class EnquetesController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.enquetesService.create(body, request.user);
+  }
+
+  @Get('mine')
+  @UseGuards(SessionGuard)
+  findMine(@Req() request: AuthenticatedRequest) {
+    return this.enquetesService.findMine(request.user);
+  }
+
+  @Patch(':id/close')
+  @UseGuards(SessionGuard)
+  close(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.enquetesService.close(id, request.user);
+  }
+
+  @Patch(':id')
+  @UseGuards(SessionGuard)
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateEnqueteDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.enquetesService.update(id, request.user, body);
+  }
+
+  @Delete(':id')
+  @UseGuards(SessionGuard)
+  @HttpCode(204)
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    await this.enquetesService.remove(id, request.user);
   }
 
   @Post('vote')

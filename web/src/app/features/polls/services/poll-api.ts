@@ -24,6 +24,13 @@ type SetVoteRequest = {
   optionId: number;
 }
 
+export type UpdatePollRequest = {
+  title: string;
+  options: string[];
+  voteRequireLogin?: boolean;
+  pollExpirationInDays?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -50,5 +57,21 @@ export class PollApi {
       pollId: setVoteRequest.pollId,
       optionId: setVoteRequest.optionId,
     })
+  }
+
+  public getMyPolls(): Observable<PollType[]> {
+    return this.http.get<PollType[]>(`${this.apiUrl}polls/mine`);
+  }
+
+  public updatePoll(id: number, request: UpdatePollRequest): Observable<PollType> {
+    return this.http.patch<PollType>(`${this.apiUrl}polls/${id}`, request);
+  }
+
+  public closePoll(id: number): Observable<PollType> {
+    return this.http.patch<PollType>(`${this.apiUrl}polls/${id}/close`, {});
+  }
+
+  public deletePoll(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}polls/${id}`);
   }
 }
