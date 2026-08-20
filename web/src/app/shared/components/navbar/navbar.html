@@ -4,6 +4,9 @@
     <nav class="navigation">
       @if(user(); as currentUser) {
         <span class="user">Olá, {{currentUser.name}}</span>
+        <button tuiButton appearance="flat" size="s" routerLink="/my-polls">
+          Minhas enquetes
+        </button>
         <button tuiButton appearance="flat" size="s" (click)="logout()">
           Sair
         </button>

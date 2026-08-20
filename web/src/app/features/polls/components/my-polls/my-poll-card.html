@@ -1,0 +1,38 @@
+<div tuiCardLarge tuiSurface="floating">
+  <div tuiHeader>
+    <h3 tuiTitle>
+      {{ pollData.title }}
+      <span tuiSubtitle>Resumo da enquete:</span>
+    </h3>
+  </div>
+    <section>
+      <div class="options">
+        @for (option of pollData.options; track option.id) {
+          <div class="option-row">
+            <span class="option-name">{{ option.name }}</span>
+            <span class="option-votes">{{ option.votes }} voto(s)</span>
+          </div>
+        }
+      </div>
+    </section>
+    <footer>
+      <div class="card-info">
+        <span>Total: {{ totalVotes }} voto(s)</span>
+        @if (!isExpired) {
+          <span>{{ daysRemaining }} dia(s) restante(s)</span>
+        }
+      </div>
+      <div class="card-actions">
+        <button tuiButton appearance="primary-grayscale" size="m" (click)="onEdit()">Editar</button>
+        <button
+          tuiButton
+          appearance="secondary"
+          size="m"
+          [disabled]="isExpired"
+          (click)="onClose()"
+        >Encerrar</button>
+        <button tuiButton appearance="secondary-destructive" size="m" (click)="onDelete()">Excluir</button>
+      </div>  
+    </footer>
+</div>
+
