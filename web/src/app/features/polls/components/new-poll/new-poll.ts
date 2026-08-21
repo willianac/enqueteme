@@ -9,6 +9,7 @@ import {
   TuiIcon,
   TuiAlertService,
   TuiError,
+  TuiSurface
 } from '@taiga-ui/core';
 import { TuiButtonClose, TuiSlider, TuiSwitch } from '@taiga-ui/kit';
 
@@ -37,6 +38,7 @@ import { UserApi } from '../../../auth/services/user-api';
     TuiSwitch,
     RouterLink,
     TuiError,
+    TuiSurface
   ],
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
