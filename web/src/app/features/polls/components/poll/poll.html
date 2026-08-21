@@ -1,85 +1,86 @@
-<div class="poll-wrapper">
-  <div tuiPlatform="web">
-    <div tuiAppearance="floating" tuiCardLarge class="poll-card">
-      <header tuiHeader style="display: flex; flex-direction: column;">
-        <div class="header-info">
-          <div class="creator">
-            <tui-icon
-              icon="@tui.circle-user"
-              [style.color]="'var(--tui-background-accent-2)'"
-              style="font-size: 16px; position: relative; bottom: 1px; margin-right: 4px;"
-            />
-            <small class="text-muted chosen">{{pollData.creatorName}}</small>
-          </div>
-          @if (pollData.voteRequireLogin) {
-            <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
-          }
-        </div>
-        <h2 tuiTitle class="title">
-          {{ pollData.title }}
-        </h2>
-      </header>
-
-      @if(!voted) {
-        <section>
-          <form [formGroup]="pollForm">
-            @for (option of pollData.options; track option.id) {
-            <label tuiLabel class="option">
-              <input
-                formControlName="option"
-                type="radio"
-                tuiRadio
-                [value]="option.id"
-              />
-              <span>{{ option.name }}</span>
-            </label>
-            }
-          </form>
-        </section>
-        @if (noOptionChosenError) {
-          <span tuiMessage appearance="negative">Por favor selecione uma opção</span>
-        }
-      } @else {
-        <section class="result" animate.enter="enter-animation">
-          @for (option of pollData.options; track option.id) {
-            <div class="option-votes">
-              <div class="percentage">
-                <span [class.chosen]="option.id == idOptionChosen">{{option.votePercentage}}%</span>
-              </div>
-              <div class="progress">
-                <span [class.chosen]="option.id == idOptionChosen">{{option.name}}</span>
-                @if(option.id == idOptionChosen) {
-                  <tui-icon
-                    icon="@tui.circle-check"
-                    [style.color]="'var(--tui-background-accent-2)'"
-                    style="margin-left: 5px; font-size: 18px; margin-bottom: 4px;"
-                  />
-                }
-                <progress
-                  size="m"
-                  tuiProgressBar
-                  [max]="100"
-                  [value]="option.votePercentage"
-                  [color]="option.progressColor ?? 'var(--tui-color-accent-2)'"
-                ></progress>
-              </div>
-            </div>
-          }
-        </section>
+<div tuiPlatform="web" tuiSurface="floating" tuiCardLarge class="poll-card">
+  <header tuiHeader class="poll-header">
+    <div class="header-info">
+      <div class="creator">
+        <tui-icon
+          icon="@tui.circle-user"
+          [style.color]="'var(--tui-background-accent-2)'"
+          class="creator-icon"
+        />
+        <small class="text-muted chosen">{{pollData.creatorName}}</small>
+      </div>
+      @if (pollData.voteRequireLogin) {
+        <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
       }
-        
-      <footer>
-        <div class="poll-info">
-          <span class="text-muted">Total de Votos: {{totalVotes}}</span>
-          <tui-pin class="pin bg-muted" />
-          <span class="text-muted">{{daysRemaining}} dias restantes</span>
-        </div>
-        <div class="action">
-          @if(!voted) {
-            <button tuiButton size="m" (click)="vote()" animate.leave="leave-animation">Votar</button>
-          }
-        </div>
-      </footer>
+      @if (isExpired) {
+        <tui-chip size="xs" appearance="negative">Encerrada</tui-chip>
+      }
     </div>
-  </div>
+    <h2 tuiTitle class="title">
+      {{ pollData.title }}
+    </h2>
+  </header>
+
+  @if(!voted && !isExpired) {
+    <section>
+      <form [formGroup]="pollForm">
+        @for (option of pollData.options; track option.id) {
+        <label tuiLabel class="option">
+          <input
+            formControlName="option"
+            type="radio"
+            tuiRadio
+            [value]="option.id"
+          />
+          <span>{{ option.name }}</span>
+        </label>
+        }
+      </form>
+    </section>
+    @if (noOptionChosenError) {
+      <span tuiMessage appearance="negative">Por favor selecione uma opção</span>
+    }
+  } @else {
+    <section class="result" animate.enter="enter-animation">
+      @for (option of pollData.options; track option.id; let i = $index) {
+        <div class="option-row">
+          <span class="option-name" [class.chosen]="option.id === idOptionChosen">
+            {{ option.name }}
+            @if (option.id === idOptionChosen) {
+              <tui-icon
+                icon="@tui.circle-check"
+                [style.color]="'var(--tui-background-accent-2)'"
+                class="check-icon"
+              />
+            }
+          </span>
+          <span class="option-votes" [class.chosen]="option.id === idOptionChosen">
+            {{ pluralize(option.votes, 'voto', 'votos') }} ({{ percentage(option.votes) }}%)
+          </span>
+        </div>
+        <progress
+          size="s"
+          tuiProgressBar
+          [max]="100"
+          [value]="percentage(option.votes)"
+          [color]="progressColor(i)"
+        ></progress>
+      }
+    </section>
+  }
+    
+  <footer>
+    <div class="poll-info">
+      <span class="text-muted">Total de Votos: {{totalVotes}}</span>
+      <tui-pin class="pin bg-muted" />
+      @if (!isExpired) {
+        <span class="text-muted">{{ pluralize(daysRemaining, 'dia', 'dias') }} restantes</span>
+      }
+    </div>
+    <div class="action">
+      @if(!voted && !isExpired) {
+        <button tuiButton size="m" (click)="vote()" animate.leave="leave-animation">Votar</button>
+      }
+    </div>
+  </footer>
 </div>

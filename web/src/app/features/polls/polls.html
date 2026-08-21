@@ -5,14 +5,12 @@
   @if(polls?.length) {
     <div class="poll-list">
       @for(poll of polls; track poll.id) {
-      <div class="poll">
         <app-poll [pollData]="poll"></app-poll>
-      </div>
       }
     </div>
   } @else {
     <div class="no-polls">
-      <h1>No polls found</h1>
+      <h1>Nenhuma enquete encontrada</h1>
     </div>
   }
 </main>
