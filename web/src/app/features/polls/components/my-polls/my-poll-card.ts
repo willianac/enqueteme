@@ -4,6 +4,14 @@ import { PollType } from '../../../../shared/types/Poll';
 import { TuiCardLarge, TuiHeader } from "@taiga-ui/layout"
 import { TuiAppearance, TuiButton, TuiDialogService, TuiSurface, TuiTitle } from '@taiga-ui/core';
 import { TuiChip, TuiProgressBar } from '@taiga-ui/kit';
+import {
+  pluralizePt,
+  pollDaysRemaining,
+  pollIsExpired,
+  pollProgressColor,
+  pollTotalVotes,
+  pollVotePercentage,
+} from '../../../../shared/utils/poll-utils';
 
 @Component({
   selector: 'app-my-poll-card',
@@ -20,39 +28,28 @@ export class MyPollCard {
   @Output() close = new EventEmitter<number>();
   @Output() delete = new EventEmitter<number>();
 
-  readonly progressColors = [
-    'var(--tui-text-action)',
-    'var(--tui-text-negative-hover)',
-    'var(--tui-text-positive-hover)',
-    'var(--tui-text-primary)',
-    'var(--tui-text-tertiary)',
-  ];
-
   get totalVotes(): number {
-    return this.pollData.options.reduce((acc: number, opt) => acc + opt.votes, 0);
+    return pollTotalVotes(this.pollData.options);
   }
 
   get daysRemaining(): number {
-    const now = new Date();
-    const end = new Date(this.pollData.expirationDate);
-    return Math.ceil((end.getTime() - now.getTime()) / (1000 * 3600 * 24));
+    return pollDaysRemaining(this.pollData.expirationDate);
   }
 
   get isExpired(): boolean {
-    return new Date() >= new Date(this.pollData.expirationDate);
+    return pollIsExpired(this.pollData.expirationDate);
   }
 
   votePercentage(votes: number): number {
-    if (this.totalVotes === 0) return 0;
-    return Math.round((votes / this.totalVotes) * 100);
+    return pollVotePercentage(votes, this.totalVotes);
   }
 
   progressColor(index: number): string {
-    return this.progressColors[index % this.progressColors.length];
+    return pollProgressColor(index);
   }
 
   pluralize(count: number, singular: string, plural: string): string {
-    return count === 1 ? `${count} ${singular}` : `${count} ${plural}`;
+    return pluralizePt(count, singular, plural);
   }
 
   onEdit(): void {

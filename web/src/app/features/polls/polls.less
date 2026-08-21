@@ -1,31 +1,18 @@
 .content {
-  width: 70%;
-  margin: auto;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 0 1rem 2rem;
 }
 
 .poll-list {
-  margin-top: 1rem;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  flex-wrap: wrap;
-  padding-bottom: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
 
 .no-polls {
-  color: white;
+  color: var(--tui-text-secondary);
   text-align: center;
   padding-top: 2rem;
-}
-
-@media (max-width: 996px) {
-  .poll-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media screen and (max-width: 576px) {
-  .content {
-    width: 90%;
-  }
 }

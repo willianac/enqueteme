@@ -85,7 +85,7 @@ describe('EditPoll', () => {
     component.editForm.get('title')?.setValue('Novo título');
     component.onSubmit();
 
-    expect(component.errorMessage()).toContain('pelo menos 2 opções');
+    expect(component.errorMessage()?.message).toContain('pelo menos 2 opções');
     expect(pollApi.updatePoll).not.toHaveBeenCalled();
   });
 
@@ -103,7 +103,7 @@ describe('EditPoll', () => {
     component.onSubmit();
     await fixture.whenStable();
 
-    expect(component.errorMessage()).toContain('já possui votos');
+    expect(component.errorMessage()?.message).toContain('já possui votos');
   });
 
   it('navigates back on successful submit', async () => {

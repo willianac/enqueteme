@@ -11,10 +11,36 @@ import {
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { PollApi } from '../../services/poll-api';
 import { PollType } from '../../../../shared/types/Poll';
+import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
+import { TuiValidationError } from '@taiga-ui/cdk';
+import {
+  TuiButton,
+  TuiTextfield,
+  TuiSurface,
+  TuiError,
+  TuiLabel,
+  TuiTitle,
+} from '@taiga-ui/core';
+import { TuiButtonClose, TuiSwitch } from '@taiga-ui/kit';
 
 @Component({
   selector: 'app-edit-poll',
-  imports: [CommonModule, Navbar, ReactiveFormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    Navbar,
+    ReactiveFormsModule,
+    RouterLink,
+    TuiCardLarge,
+    TuiHeader,
+    TuiButton,
+    TuiTextfield,
+    TuiSurface,
+    TuiError,
+    TuiLabel,
+    TuiTitle,
+    TuiButtonClose,
+    TuiSwitch,
+  ],
   templateUrl: './edit-poll.html',
   styleUrl: './edit-poll.less',
 })
@@ -25,7 +51,7 @@ export class EditPoll implements OnInit {
 
   readonly loading = signal(true);
   readonly saving = signal(false);
-  readonly errorMessage = signal('');
+  readonly errorMessage = signal<TuiValidationError | null>(null);
   readonly pollNotFound = signal(false);
 
   pollId = 0;
@@ -53,7 +79,7 @@ export class EditPoll implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Não foi possível carregar a enquete.');
+        this.errorMessage.set(new TuiValidationError('Não foi possível carregar a enquete.'));
         this.loading.set(false);
       },
     });
@@ -82,12 +108,12 @@ export class EditPoll implements OnInit {
     const trimmedOptions = raw.options.map((o) => o.trim()).filter((o) => o !== '');
 
     if (trimmedOptions.length < 2) {
-      this.errorMessage.set('A enquete precisa de pelo menos 2 opções.');
+      this.errorMessage.set(new TuiValidationError('A enquete precisa de pelo menos 2 opções.'));
       return;
     }
 
     this.saving.set(true);
-    this.errorMessage.set('');
+    this.errorMessage.set(null);
 
     this.pollApi
       .updatePoll(this.pollId, {
@@ -101,11 +127,11 @@ export class EditPoll implements OnInit {
         error: (err) => {
           this.saving.set(false);
           if (err.status === 409) {
-            this.errorMessage.set('Esta enquete já possui votos e não pode ser editada.');
+            this.errorMessage.set(new TuiValidationError('Esta enquete já possui votos e não pode ser editada.'));
           } else if (err.status === 403 || err.status === 404) {
-            this.errorMessage.set('Enquete não encontrada.');
+            this.errorMessage.set(new TuiValidationError('Enquete não encontrada.'));
           } else {
-            this.errorMessage.set('Não foi possível salvar as alterações.');
+            this.errorMessage.set(new TuiValidationError('Não foi possível salvar as alterações.'));
           }
         },
       });

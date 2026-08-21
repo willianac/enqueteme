@@ -8,68 +8,70 @@
   } @else if (pollNotFound()) {
     <p class="state-message">Enquete não encontrada.</p>
   } @else {
-    <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="edit-form">
-      <div class="form-group">
-        <label for="title" class="form-label">Título</label>
-        <input id="title" type="text" formControlName="title" class="form-input" />
-      </div>
+    <div tuiCardLarge tuiSurface="floating" class="poll-card">
+      <header tuiHeader>
+        <h3 tuiTitle>
+          Dados da enquete
+          <span tuiSubtitle>Enquete #{{ pollId }}</span>
+        </h3>
+      </header>
+      <section>
+        <form [formGroup]="editForm" (ngSubmit)="onSubmit()" class="edit-form">
+          <tui-textfield tuiTextfieldSize="l">
+            <input tuiTextfield formControlName="title" placeholder="Título da enquete" />
+          </tui-textfield>
 
-      <div class="form-group">
-        <label class="form-label">Opções</label>
-        <div formArrayName="options" class="options-list">
-          @for (option of options.controls; track $index) {
-            <div class="option-row">
+          <div class="options-block" formArrayName="options">
+            <span class="text-muted">Opções</span>
+            @for (option of options.controls; track $index) {
+              <div class="option-wrapper">
+                <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
+                  <input tuiTextfield [formControl]="option" [placeholder]="'Opção ' + ($index + 1)" />
+                </tui-textfield>
+                @if (options.length > 2) {
+                  <button tuiButtonClose tuiIconButton type="button" size="xs" (click)="removeOption($index)">
+                    Remover
+                  </button>
+                }
+              </div>
+            }
+            <button tuiButton appearance="outline" size="s" type="button" (click)="addOption()">
+              Adicionar opção
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <label tuiLabel class="switch-label">
+              Exigir login para votar
+              <input tuiSwitch type="checkbox" formControlName="voteRequireLogin" />
+            </label>
+            <tui-textfield tuiTextfieldSize="m" class="duration-input">
               <input
-                type="text"
-                [formControl]="option"
-                class="form-input"
-                [placeholder]="'Opção ' + ($index + 1)"
+                tuiTextfield
+                type="number"
+                formControlName="pollExpirationInDays"
+                min="1"
+                placeholder="Duração (dias)"
               />
-              @if (options.length > 2) {
-                <button type="button" class="btn btn-remove" (click)="removeOption($index)">
-                  Remover
-                </button>
-              }
-            </div>
-          }
-        </div>
-        <button type="button" class="btn btn-add" (click)="addOption()">
-          Adicionar opção
-        </button>
-      </div>
+            </tui-textfield>
+          </div>
 
-      <div class="form-group inline">
-        <label class="form-label checkbox-label">
-          <input type="checkbox" formControlName="voteRequireLogin" />
-          Exigir login para votar
-        </label>
-      </div>
+          <tui-error [error]="errorMessage()" />
 
-      <div class="form-group">
-        <label for="expiration" class="form-label">Duração (dias)</label>
-        <input
-          id="expiration"
-          type="number"
-          formControlName="pollExpirationInDays"
-          class="form-input short"
-          min="1"
-        />
-      </div>
-
-      @if (errorMessage()) {
-        <p class="form-error">{{ errorMessage() }}</p>
-      }
-
-      <div class="form-actions">
-        <a routerLink="/my-polls" class="btn btn-cancel">Cancelar</a>
-        <button
-          type="submit"
-          class="btn btn-save"
-          [disabled]="saving() || editForm.invalid"
-        >
-          {{ saving() ? 'Salvando...' : 'Salvar' }}
-        </button>
-      </div>
-    </form>
+          <footer>
+            <a tuiButton appearance="secondary" size="m" routerLink="/my-polls">Cancelar</a>
+            <button
+              tuiButton
+              appearance="primary"
+              size="m"
+              type="submit"
+              [disabled]="saving() || editForm.invalid"
+            >
+              {{ saving() ? 'Salvando...' : 'Salvar' }}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
   }
 </main>

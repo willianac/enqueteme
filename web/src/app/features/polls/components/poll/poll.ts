@@ -3,19 +3,28 @@ import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
-import { TuiLabel, TuiTitle} from '@taiga-ui/core';
-import { TuiChip, TuiPin, TuiProgress, TuiRadio, TuiMessage } from '@taiga-ui/kit';
+import { TuiLabel, TuiSurface, TuiTitle} from '@taiga-ui/core';
+import { TuiChip, TuiPin, TuiProgress, TuiRadio, TuiMessage, TuiProgressBar } from '@taiga-ui/kit';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
 import { PollApi } from '../../services/poll-api';
 import { UserApi } from '../../../auth/services/user-api';
+import {
+  pluralizePt,
+  pollDaysRemaining,
+  pollIsExpired,
+  pollProgressColor,
+  pollTotalVotes,
+  pollVotePercentage,
+} from '../../../../shared/utils/poll-utils';
 
 @Component({
   selector: 'app-poll',
   imports: [ 
     TuiPlatform, 
     TuiCardLarge, 
+    TuiSurface,
     TuiHeader, 
     TuiButton, 
     TuiLabel, 
@@ -24,6 +33,7 @@ import { UserApi } from '../../../auth/services/user-api';
     TuiRadio, 
     TuiPin, 
     TuiProgress,
+    TuiProgressBar,
     TuiIcon,
     TuiChip,
     TuiMessage,
@@ -46,17 +56,25 @@ export class Poll implements OnChanges {
   idOptionChosen: null | number = null;
   noOptionChosenError = false;
 
-  progressColors = [
-    "var(--tui-text-action)",
-    "var(--tui-text-negative-hover)",
-    "var(--tui-text-positive-hover)",
-    "var(--tui-text-primary)",
-    "var(--tui-text-tertiary)"
-  ]
-
   protected pollForm = new FormGroup({
     option: new FormControl<null | number>(null)
   });
+
+  get isExpired(): boolean {
+    return pollIsExpired(this.pollData.expirationDate);
+  }
+
+  percentage(votes: number): number {
+    return pollVotePercentage(votes, this.totalVotes);
+  }
+
+  progressColor(index: number): string {
+    return pollProgressColor(index);
+  }
+
+  pluralize(count: number, singular: string, plural: string): string {
+    return pluralizePt(count, singular, plural);
+  }
 
   protected vote() {
     if(!this.pollForm.getRawValue().option) {
@@ -75,8 +93,8 @@ export class Poll implements OnChanges {
       pollId: this.pollData.id
     }).subscribe({
       next: (res) => {
-        this.totalVotes++
-        this.pollData.options = this.returnOptionsWithPercentageAndColors(res)
+        this.pollData.options = res.options
+        this.calcTotalVotes(this.pollData.options)
         this.idOptionChosen = this.pollForm.getRawValue().option
         this.voted = true
         this.cdr.detectChanges();
@@ -103,22 +121,8 @@ export class Poll implements OnChanges {
     return 'Não foi possível registrar o voto. Tente novamente.';
   }
 
-  private returnOptionsWithPercentageAndColors(poll: PollType) {
-    return poll.options
-      .map((opt) => {
-        const perc = (opt.votes / this.totalVotes) * 100
-        return { ...opt, votePercentage: Math.round(perc) }
-      })
-      .map((opt, index) => {
-        return { ...opt, progressColor: this.progressColors[index % this.progressColors.length] }
-      }
-    );
-  }
-
   private calcTotalVotes(options: PollType["options"]) {
-    this.totalVotes = options.reduce((acc, opt) => {
-      return acc + opt.votes;
-    }, 0);
+    this.totalVotes = pollTotalVotes(options);
   }
 
   private isUserValid() {
@@ -137,10 +141,7 @@ export class Poll implements OnChanges {
   }
 
   private calcDaysRemaining(date: string) {
-    const currentDate = new Date();
-    const endDate = new Date(this.pollData.expirationDate);
-    const timeDiff = endDate.getTime() - currentDate.getTime();
-    this.daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    this.daysRemaining = pollDaysRemaining(date);
   }
 
   ngOnChanges() {

@@ -27,6 +27,6 @@ describe('Polls', () => {
   });
 
   it('renders the empty poll state', () => {
-    expect(fixture.nativeElement.textContent).toContain('No polls found');
+    expect(fixture.nativeElement.textContent).toContain('Nenhuma enquete encontrada');
   });
 });
