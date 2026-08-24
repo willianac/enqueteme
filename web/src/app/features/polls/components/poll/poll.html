@@ -15,6 +15,9 @@
       @if (isExpired) {
         <tui-chip size="xs" appearance="negative">Encerrada</tui-chip>
       }
+      @if (voted) {
+        <tui-chip size="xs" appearance="positive">Você votou</tui-chip>
+      }
     </div>
     <h2 tuiTitle class="title">
       {{ pollData.title }}

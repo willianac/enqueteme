@@ -11,4 +11,6 @@ export type PollType = {
     votePercentage?: number;
     progressColor?: string;
   }[];
+  hasVoted?: boolean;
+  votedOptionId?: number | null;
 };

@@ -147,5 +147,9 @@ export class Poll implements OnChanges {
   ngOnChanges() {
     this.calcDaysRemaining(this.pollData.expirationDate);
     this.calcTotalVotes(this.pollData.options);
+    this.voted = Boolean(this.pollData.hasVoted);
+    if (this.voted) {
+      this.idOptionChosen = this.pollData.votedOptionId ?? null;
+    }
   }
 }

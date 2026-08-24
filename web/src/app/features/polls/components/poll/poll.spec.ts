@@ -131,4 +131,28 @@ describe('Poll', () => {
     const component = fixture.componentInstance;
     expect(component.percentage(0)).toBe(0);
   });
+
+  it('renders result view and "Você votou" when poll has hasVoted true', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 3,
+      title: 'Already voted poll',
+      creatorName: 'Will',
+      expirationDate: '2026-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      hasVoted: true,
+      votedOptionId: 1,
+      options: [
+        { id: 1, name: 'A', votes: 5 },
+        { id: 2, name: 'B', votes: 3 },
+      ],
+    });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Você votou');
+    expect(el.textContent).not.toContain('Votar');
+
+    const chosenOption = el.querySelector('.option-name.chosen');
+    expect(chosenOption?.textContent).toContain('A');
+  });
 });
