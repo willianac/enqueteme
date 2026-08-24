@@ -121,7 +121,7 @@ export class EnquetesService {
       throw new NotFoundException('Poll not found.');
     }
 
-    if (!enquete.usuarioId || enquete.usuarioId !== BigInt(userId)) {
+    if (enquete.usuarioId !== BigInt(userId)) {
       throw new ForbiddenException('You do not own this poll.');
     }
 
@@ -178,7 +178,7 @@ export class EnquetesService {
         throw new BadRequestException('Poll not found.');
       }
 
-      if (enquete.expirationDate && enquete.expirationDate <= new Date()) {
+      if (enquete.expirationDate <= new Date()) {
         throw new BadRequestException('Poll has expired.');
       }
 
@@ -229,7 +229,7 @@ export class EnquetesService {
     return {
       id: toSafeNumber(enquete.id),
       title: enquete.title,
-      creatorName: enquete.usuario?.name,
+      creatorName: enquete.usuario.name,
       expirationDate: enquete.expirationDate,
       voteRequireLogin: enquete.voteRequireLogin,
       options: this.options(enquete),
@@ -240,7 +240,7 @@ export class EnquetesService {
     return enquete.opcoes.map((opcao) => ({
       id: toSafeNumber(opcao.id),
       name: opcao.name,
-      votes: toSafeNumber(opcao.votes ?? 0n),
+      votes: toSafeNumber(opcao.votes),
     }));
   }
 }
