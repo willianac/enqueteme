@@ -16,27 +16,43 @@ import { UpdateEnqueteDto } from './update-enquete.dto';
 
 type EnqueteCompleta = Prisma.EnqueteGetPayload<{
   include: { usuario: true; opcoes: true };
-}>;
+}> & { votos?: { opcaoId: bigint }[] };
 
 @Injectable()
 export class EnquetesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(usuario: AuthenticatedUser | null) {
     const enquetes = await this.prisma.enquete.findMany({
-      include: { usuario: true, opcoes: true },
+      include: {
+        usuario: true,
+        opcoes: true,
+        votos: usuario
+          ? {
+              where: { usuarioId: BigInt(usuario.id) },
+              select: { opcaoId: true },
+            }
+          : false,
+      },
     });
 
-    return enquetes.map((enquete) => this.toResponse(enquete));
+    return enquetes.map((enquete) => this.toResponse(enquete as EnqueteCompleta));
   }
 
   async findMine(usuario: AuthenticatedUser) {
     const enquetes = await this.prisma.enquete.findMany({
       where: { usuarioId: BigInt(usuario.id) },
-      include: { usuario: true, opcoes: true },
+      include: {
+        usuario: true,
+        opcoes: true,
+        votos: {
+          where: { usuarioId: BigInt(usuario.id) },
+          select: { opcaoId: true },
+        },
+      },
     });
 
-    return enquetes.map((enquete) => this.toResponse(enquete));
+    return enquetes.map((enquete) => this.toResponse(enquete as EnqueteCompleta));
   }
 
   async close(id: number, usuario: AuthenticatedUser) {
@@ -233,6 +249,10 @@ export class EnquetesService {
       expirationDate: enquete.expirationDate,
       voteRequireLogin: enquete.voteRequireLogin,
       options: this.options(enquete),
+      hasVoted: Boolean(enquete.votos?.length),
+      votedOptionId: enquete.votos?.[0]
+        ? toSafeNumber(enquete.votos[0].opcaoId)
+        : null,
     };
   }
 

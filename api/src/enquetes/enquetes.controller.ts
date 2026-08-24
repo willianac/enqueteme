@@ -33,8 +33,12 @@ export class EnquetesController {
   @Get()
   async findAll(
     @Res({ passthrough: true }) response: { status(code: number): unknown },
+    @Req() request: Request,
   ) {
-    const enquetes = await this.enquetesService.findAll();
+    const user = await this.auth.resolveSession(
+      request.cookies?.[SESSION_COOKIE] as string | undefined,
+    );
+    const enquetes = await this.enquetesService.findAll(user);
 
     if (enquetes.length === 0) {
       response.status(204);

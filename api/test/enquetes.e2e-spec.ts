@@ -106,8 +106,26 @@ describe('Enquetes API', () => {
             { id: 20, name: 'NestJS', votes: 0 },
             { id: 21, name: 'Spring', votes: 1 },
           ],
+          hasVoted: false,
+          votedOptionId: null,
         },
       ]);
+  });
+
+  it('returns hasVoted and votedOptionId for authenticated users', async () => {
+    prisma.enquete.findMany.mockResolvedValue([
+      { ...enquete, votos: [{ opcaoId: 20n }] },
+    ]);
+
+    await request(app.getHttpServer())
+      .get('/polls')
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(200)
+      .expect((response) => {
+        expect(response.body).toHaveLength(1);
+        expect(response.body[0].hasVoted).toBe(true);
+        expect(response.body[0].votedOptionId).toBe(20);
+      });
   });
 
   it('rejects incomplete poll data', async () => {
@@ -340,7 +358,14 @@ describe('Enquetes API', () => {
 
       expect(prisma.enquete.findMany).toHaveBeenCalledWith({
         where: { usuarioId: 1n },
-        include: { usuario: true, opcoes: true },
+        include: {
+          usuario: true,
+          opcoes: true,
+          votos: {
+            where: { usuarioId: 1n },
+            select: { opcaoId: true },
+          },
+        },
       });
     });
   });
