@@ -1,16 +1,22 @@
 <app-navbar></app-navbar>
 <main class="content">
-  @let polls = polls$ | async;
-
-  @if(polls?.length) {
-    <div class="poll-list">
-      @for(poll of polls; track poll.id) {
-        <app-poll [pollData]="poll"></app-poll>
-      }
+  @if (loading()) {
+    <p class="state-message">Carregando enquetes...</p>
+  } @else if (error()) {
+    <div class="state-message error-state">
+      <p>Não foi possível carregar as enquetes.</p>
+      <button tuiButton appearance="primary" size="m" (click)="loadPolls()">Tentar novamente</button>
+    </div>
+  } @else if (polls().length === 0) {
+    <div class="state-message empty-state">
+      <p>Nenhuma enquete encontrada.</p>
+      <button tuiButton appearance="primary" size="m" routerLink="/new-poll">Criar enquete</button>
     </div>
   } @else {
-    <div class="no-polls">
-      <h1>Nenhuma enquete encontrada</h1>
+    <div class="poll-list">
+      @for (poll of polls(); track poll.id) {
+        <app-poll [pollData]="poll"></app-poll>
+      }
     </div>
   }
 </main>
