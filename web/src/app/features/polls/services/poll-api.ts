@@ -48,8 +48,12 @@ export class PollApi {
     });
   }
 
-  public getAllPolls() {
-    return this.http.get<PollType[]>(`${this.apiUrl}polls`);
+  public getAllPolls(page = 1, limit = 10) {
+    return this.http.get<PollType[]>(`${this.apiUrl}polls?page=${page}&limit=${limit}`);
+  }
+
+  public getPoll(id: number) {
+    return this.http.get<PollType>(`${this.apiUrl}polls/${id}`);
   }
 
   public setVote(setVoteRequest: SetVoteRequest): Observable<PollType> {

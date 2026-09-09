@@ -1,0 +1,15 @@
+<app-navbar></app-navbar>
+<main class="content">
+  @if (loading()) {
+    <p class="state-message">Carregando enquete...</p>
+  } @else if (error()) {
+    <div class="state-message error-state">
+      <p>Não foi possível carregar a enquete. Ela pode não existir ou foi excluída.</p>
+      <a tuiButton appearance="primary" size="m" routerLink="/polls">Ver todas as enquetes</a>
+    </div>
+  } @else if (poll()) {
+    <div class="poll-list">
+      <app-poll [pollData]="poll()!"></app-poll>
+    </div>
+  }
+</main>

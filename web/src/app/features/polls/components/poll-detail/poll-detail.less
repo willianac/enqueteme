@@ -1,0 +1,26 @@
+.content {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 0 1rem 2rem;
+}
+
+.poll-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.state-message {
+  color: var(--tui-text-secondary);
+  text-align: center;
+  padding: 3rem 0;
+  font-size: 1rem;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
