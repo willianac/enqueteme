@@ -30,7 +30,7 @@ describe('Poll', () => {
       id: 1,
       title: 'Question?',
       creatorName: 'Will',
-      expirationDate: '2026-08-25T12:00:00.000Z',
+      expirationDate: '2030-08-25T12:00:00.000Z',
       voteRequireLogin: false,
       options: [
         { id: 1, name: 'A', votes: 0 },
@@ -98,7 +98,7 @@ describe('Poll', () => {
         id: 1,
         title: 'Question?',
         creatorName: 'Will',
-        expirationDate: '2026-08-25T12:00:00.000Z',
+        expirationDate: '2030-08-25T12:00:00.000Z',
         voteRequireLogin: false,
         options: [
           { id: 1, name: 'A', votes: 3 },
@@ -137,7 +137,7 @@ describe('Poll', () => {
       id: 3,
       title: 'Already voted poll',
       creatorName: 'Will',
-      expirationDate: '2026-08-25T12:00:00.000Z',
+      expirationDate: '2030-08-25T12:00:00.000Z',
       voteRequireLogin: false,
       hasVoted: true,
       votedOptionId: 1,
