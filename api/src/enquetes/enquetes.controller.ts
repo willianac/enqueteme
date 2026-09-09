@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -32,13 +33,17 @@ export class EnquetesController {
 
   @Get()
   async findAll(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
     @Res({ passthrough: true }) response: { status(code: number): unknown },
     @Req() request: Request,
   ) {
     const user = await this.auth.resolveSession(
       request.cookies?.[SESSION_COOKIE] as string | undefined,
     );
-    const enquetes = await this.enquetesService.findAll(user);
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+    const enquetes = await this.enquetesService.findAll(user, parsedPage, parsedLimit);
 
     if (enquetes.length === 0) {
       response.status(204);
@@ -61,6 +66,17 @@ export class EnquetesController {
   @UseGuards(SessionGuard)
   findMine(@Req() request: AuthenticatedRequest) {
     return this.enquetesService.findMine(request.user);
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() request: Request,
+  ) {
+    const user = await this.auth.resolveSession(
+      request.cookies?.[SESSION_COOKIE] as string | undefined,
+    );
+    return this.enquetesService.findOne(id, user);
   }
 
   @Patch(':id/close')
