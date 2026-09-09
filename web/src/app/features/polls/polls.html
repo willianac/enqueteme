@@ -18,5 +18,12 @@
         <app-poll [pollData]="poll"></app-poll>
       }
     </div>
+    @if (hasMore()) {
+      <div class="load-more-container">
+        <button tuiButton appearance="outline" size="m" (click)="loadMore()" [disabled]="loadingMore()">
+          {{ loadingMore() ? 'Carregando...' : 'Carregar mais' }}
+        </button>
+      </div>
+    }
   }
 </main>

@@ -80,10 +80,16 @@ export class Poll implements OnChanges {
     if(!this.pollForm.getRawValue().option) {
       return this.noOptionChosenError = true
     }
-    if(!this.isUserAllowedToVote()) {
+    if (this.isExpired) {
+      return this.alerts.open(
+        'Esta enquete já expirou.',
+        { label: 'Não foi possível votar', appearance: 'negative' }
+      ).subscribe();
+    }
+    if (!this.isUserValid()) {
       return this.alerts.open(
         'É preciso fazer o login antes de votar nesta enquete.', 
-        { label: 'Faça o login', appearance: "negative" }
+        { label: 'Faça o login', appearance: 'negative' }
       ).subscribe();
     }
     this.noOptionChosenError = false;
@@ -132,13 +138,6 @@ export class Poll implements OnChanges {
     return true
   }
 
-  private isUserAllowedToVote() {
-    const currentDate = new Date();
-    const endDate = new Date(this.pollData.expirationDate);
-    const validUser = this.isUserValid();
-
-    return currentDate < endDate && validUser;
-  }
 
   private calcDaysRemaining(date: string) {
     this.daysRemaining = pollDaysRemaining(date);

@@ -44,7 +44,7 @@ describe('Enquetes API', () => {
     createdAt: new Date('2026-08-11T12:00:00.000Z'),
     updatedAt: new Date('2026-08-11T12:00:00.000Z'),
     voteRequireLogin: false,
-    expirationDate: new Date('2026-08-25T12:00:00.000Z'),
+    expirationDate: new Date('2030-08-25T12:00:00.000Z'),
     usuarioId: 1n,
     usuario,
     opcoes: [
@@ -100,7 +100,7 @@ describe('Enquetes API', () => {
           id: 10,
           title: 'Melhor framework?',
           creatorName: 'Will',
-          expirationDate: '2026-08-25T12:00:00.000Z',
+          expirationDate: '2030-08-25T12:00:00.000Z',
           voteRequireLogin: false,
           options: [
             { id: 20, name: 'NestJS', votes: 0 },
@@ -125,6 +125,53 @@ describe('Enquetes API', () => {
         expect(response.body).toHaveLength(1);
         expect(response.body[0].hasVoted).toBe(true);
         expect(response.body[0].votedOptionId).toBe(20);
+      });
+  it('supports pagination via page and limit query params', async () => {
+    prisma.enquete.findMany.mockResolvedValue([enquete]);
+
+    await request(app.getHttpServer())
+      .get('/polls?page=2&limit=5')
+      .expect(200);
+
+    expect(prisma.enquete.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 5,
+        take: 5,
+      }),
+    );
+  });
+
+  it('GET /polls/:id › returns poll by id', async () => {
+    prisma.enquete.findUnique.mockResolvedValue(enquete);
+
+    await request(app.getHttpServer())
+      .get('/polls/10')
+      .expect(200)
+      .expect((response) => {
+        expect(response.body).toEqual({
+          id: 10,
+          title: 'Melhor framework?',
+          creatorName: 'Will',
+          expirationDate: '2030-08-25T12:00:00.000Z',
+          voteRequireLogin: false,
+          options: [
+            { id: 20, name: 'NestJS', votes: 0 },
+            { id: 21, name: 'Angular', votes: 0 },
+          ],
+          hasVoted: false,
+          votedOptionId: null,
+        });
+      });
+  });
+
+  it('GET /polls/:id › returns 404 when poll does not exist', async () => {
+    prisma.enquete.findUnique.mockResolvedValue(null);
+
+    await request(app.getHttpServer())
+      .get('/polls/999')
+      .expect(404)
+      .expect((response) => {
+        expect(response.body.message).toBe('Poll not found.');
       });
   });
 

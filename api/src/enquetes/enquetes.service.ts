@@ -22,8 +22,12 @@ type EnqueteCompleta = Prisma.EnqueteGetPayload<{
 export class EnquetesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(usuario: AuthenticatedUser | null) {
+  async findAll(usuario: AuthenticatedUser | null, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
     const enquetes = await this.prisma.enquete.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
       include: {
         usuario: true,
         opcoes: true,
@@ -53,6 +57,28 @@ export class EnquetesService {
     });
 
     return enquetes.map((enquete) => this.toResponse(enquete as EnqueteCompleta));
+  }
+
+  async findOne(id: number, usuario: AuthenticatedUser | null) {
+    const enquete = await this.prisma.enquete.findUnique({
+      where: { id: BigInt(id) },
+      include: {
+        usuario: true,
+        opcoes: true,
+        votos: usuario
+          ? {
+              where: { usuarioId: BigInt(usuario.id) },
+              select: { opcaoId: true },
+            }
+          : false,
+      },
+    });
+
+    if (!enquete) {
+      throw new NotFoundException('Poll not found.');
+    }
+
+    return this.toResponse(enquete as EnqueteCompleta);
   }
 
   async close(id: number, usuario: AuthenticatedUser) {

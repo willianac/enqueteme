@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Signin } from './features/auth/signin/signin';
 import { Polls } from './features/polls/polls';
+import { PollDetail } from './features/polls/components/poll-detail/poll-detail';
 import { NewPoll } from './features/polls/components/new-poll/new-poll';
 import { MyPolls } from './features/polls/components/my-polls/my-polls';
 import { EditPoll } from './features/polls/components/edit-poll/edit-poll';
@@ -16,6 +17,11 @@ export const routes: Routes = [
     path: "polls",
     component: Polls,
     title: "Lista de Enquetes"
+  },
+  {
+    path: "polls/:id",
+    component: PollDetail,
+    title: "Enquete"
   },
   {
     path: "new-poll",
