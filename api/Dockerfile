@@ -6,12 +6,13 @@ COPY nest-cli.json prisma.config.ts tsconfig*.json ./
 COPY prisma ./prisma
 COPY src ./src
 RUN npm run build
+RUN npm prune --omit=dev
 
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --omit=dev
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY prisma.config.ts ./
 COPY prisma ./prisma
