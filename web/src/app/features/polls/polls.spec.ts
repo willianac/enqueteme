@@ -97,4 +97,47 @@ describe('Polls', () => {
     expect(pollApi.getAllPolls).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.textContent).toContain('Enquete 1');
   });
+
+  it('loads more polls when "Carregar mais" button is clicked', async () => {
+    const tenPolls: PollType[] = Array.from({ length: 10 }, (_, i) => ({
+      id: i + 1,
+      title: `Enquete ${i + 1}`,
+      creatorName: 'Will',
+      expirationDate: '2099-12-31T23:59:59.000Z',
+      voteRequireLogin: false,
+      options: [{ id: 1, name: 'A', votes: 1 }],
+    }));
+    const nextPolls: PollType[] = [
+      {
+        id: 11,
+        title: 'Enquete 11',
+        creatorName: 'Will',
+        expirationDate: '2099-12-31T23:59:59.000Z',
+        voteRequireLogin: false,
+        options: [{ id: 1, name: 'A', votes: 1 }],
+      },
+    ];
+
+    pollApi.getAllPolls.mockReturnValue(of(tenPolls));
+    fixture = TestBed.createComponent(Polls);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Carregar mais');
+
+    pollApi.getAllPolls.mockReturnValue(of(nextPolls));
+    const buttons = fixture.nativeElement.querySelectorAll('button');
+    const loadMoreBtn = Array.from(buttons).find((b: unknown) =>
+      (b as Element).textContent?.includes('Carregar mais'),
+    );
+    (loadMoreBtn as HTMLButtonElement)?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(2, 10);
+    expect(fixture.nativeElement.textContent).toContain('Enquete 1');
+    expect(fixture.nativeElement.textContent).toContain('Enquete 11');
+  });
 });
