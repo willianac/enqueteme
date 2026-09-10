@@ -1,13 +1,12 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TuiButton, TuiIcon, TuiSurface } from '@taiga-ui/core';
-import { TuiCardMedium } from '@taiga-ui/layout';
 import { UserApi } from '../../../features/auth/services/user-api';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-navbar',
-  imports: [TuiButton, TuiIcon, RouterLink, CommonModule, TuiSurface, TuiCardMedium],
+  imports: [TuiButton, TuiIcon, RouterLink, CommonModule, TuiSurface],
   templateUrl: './navbar.html',
   styleUrl: './navbar.less',
 })

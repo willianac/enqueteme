@@ -18,7 +18,7 @@
           </button>
 
           @if (open()) {
-            <div tuiSurface="floating" tuiCardMedium class="user-dropdown-panel" (click)="$event.stopPropagation()">
+            <div tuiSurface="floating" class="user-dropdown-panel" (click)="$event.stopPropagation()">
               <div class="user-dropdown-header">
                 <span class="dropdown-greeting">Conectado como</span>
                 <span class="dropdown-username">{{ currentUser.name }}</span>
