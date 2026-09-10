@@ -13,11 +13,37 @@
       <button tuiButton appearance="primary" size="m" routerLink="/new-poll">Criar enquete</button>
     </div>
   } @else {
-    <div class="poll-list">
-      @for (poll of polls(); track poll.id) {
-        <app-poll [pollData]="poll"></app-poll>
-      }
+    <div class="polls-toolbar">
+      <div class="toolbar-title-group">
+        <h1 class="page-title">Enquetes</h1>
+        <span class="polls-count text-muted">
+          {{ pluralize(filteredPolls().length, 'enquete', 'enquetes') }}
+        </span>
+      </div>
+      <tui-segmented
+        [activeItemIndex]="activeFilterIndex()"
+        (activeItemIndexChange)="onFilterChange($event)"
+        size="s"
+        class="filter-segmented"
+      >
+        <button type="button">Todas</button>
+        <button type="button">Ativas</button>
+        <button type="button">Encerradas</button>
+      </tui-segmented>
     </div>
+
+    @if (filteredPolls().length === 0) {
+      <div class="state-message empty-filter-state">
+        <p>Nenhuma enquete encontrada para o filtro selecionado.</p>
+      </div>
+    } @else {
+      <div class="poll-list">
+        @for (poll of filteredPolls(); track poll.id) {
+          <app-poll [pollData]="poll"></app-poll>
+        }
+      </div>
+    }
+
     @if (hasMore()) {
       <div class="load-more-container">
         <button tuiButton appearance="outline" size="m" (click)="loadMore()" [disabled]="loadingMore()">

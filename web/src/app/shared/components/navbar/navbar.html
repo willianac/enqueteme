@@ -1,15 +1,41 @@
 <header class="navbar">
   <div class="navbar-content">
-    <img src="assets/logo.png" alt="" class="logo" routerLink="/">
+    <img src="assets/logo-clean.png" alt="Enqueteme" class="logo" [routerLink]="user() ? '/polls' : '/'">
     <nav class="navigation">
       @if(user(); as currentUser) {
-        <span class="user">Olá, {{currentUser.name}}</span>
-        <button tuiButton appearance="flat" size="s" routerLink="/my-polls">
-          Minhas enquetes
-        </button>
-        <button tuiButton appearance="flat" size="s" (click)="logout()">
-          Sair
-        </button>
+        <div class="user-menu-container">
+          <button
+            tuiButton
+            appearance="flat"
+            size="s"
+            type="button"
+            class="user-trigger"
+            (click)="toggleMenu($event)"
+          >
+            <tui-icon icon="@tui.circle-user" class="user-avatar-icon" />
+            <span class="user-name">Olá, {{ currentUser.name }}</span>
+            <tui-icon [icon]="open() ? '@tui.chevron-up' : '@tui.chevron-down'" class="chevron-icon" />
+          </button>
+
+          @if (open()) {
+            <div tuiSurface="floating" class="user-dropdown-panel" (click)="$event.stopPropagation()">
+              <div class="user-dropdown-header">
+                <span class="dropdown-greeting">Conectado como</span>
+                <span class="dropdown-username">{{ currentUser.name }}</span>
+              </div>
+              <div class="dropdown-items">
+                <a routerLink="/my-polls" class="dropdown-item" (click)="open.set(false)">
+                  <tui-icon icon="@tui.list" class="menu-icon" />
+                  <span>Minhas enquetes</span>
+                </a>
+                <button type="button" class="dropdown-item text-negative" (click)="logout()">
+                  <tui-icon icon="@tui.log-out" class="menu-icon" />
+                  <span>Sair</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       } @else {
         <button
           tuiButton

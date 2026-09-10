@@ -7,20 +7,24 @@
           [style.color]="'var(--tui-background-accent-2)'"
           class="creator-icon"
         />
-        <small class="text-muted chosen">{{pollData.creatorName}}</small>
+        <small class="creator-name">{{pollData.creatorName}}</small>
       </div>
-      @if (pollData.voteRequireLogin) {
-        <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
-      }
-      @if (isExpired) {
-        <tui-chip size="xs" appearance="negative">Encerrada</tui-chip>
-      }
-      @if (voted) {
-        <tui-chip size="xs" appearance="positive">Você votou</tui-chip>
-      }
+      <div class="badges">
+        @if (pollData.voteRequireLogin && !isExpired && !voted) {
+          <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
+        }
+        @if (isExpired) {
+          <tui-chip size="xs" appearance="negative">Encerrada</tui-chip>
+        }
+        @if (voted) {
+          <tui-chip size="xs" appearance="positive">Você votou</tui-chip>
+        }
+      </div>
     </div>
     <h2 tuiTitle class="title">
-      {{ pollData.title }}
+      <a [routerLink]="['/polls', pollData.id]" class="title-link">
+        {{ pollData.title }}
+      </a>
     </h2>
   </header>
 
@@ -45,7 +49,7 @@
     }
   } @else {
     <section class="result" animate.enter="enter-animation">
-      @for (option of pollData.options; track option.id; let i = $index) {
+      @for (option of pollData.options; track option.id) {
         <div class="option-row">
           <span class="option-name" [class.chosen]="option.id === idOptionChosen">
             {{ option.name }}
@@ -66,7 +70,7 @@
           tuiProgressBar
           [max]="100"
           [value]="percentage(option.votes)"
-          [color]="progressColor(i)"
+          [color]="progressColor(option.id === idOptionChosen)"
         ></progress>
       }
     </section>
@@ -75,12 +79,26 @@
   <footer>
     <div class="poll-info">
       <span class="text-muted">Total de Votos: {{totalVotes}}</span>
-      <tui-pin class="pin bg-muted" />
       @if (!isExpired) {
+        <tui-pin class="pin bg-muted" />
         <span class="text-muted">{{ pluralize(daysRemaining, 'dia', 'dias') }} restantes</span>
       }
     </div>
-    <div class="action">
+    <div class="footer-actions">
+      <button
+        tuiButton
+        appearance="flat"
+        size="s"
+        type="button"
+        class="btn-share"
+        (click)="copyShareLink($event)"
+        title="Copiar link da enquete"
+      >
+        <tui-icon
+          [icon]="copied ? '@tui.check' : '@tui.share-2'"
+          [style.color]="copied ? 'var(--tui-text-positive-hover)' : 'inherit'"
+        />
+      </button>
       @if(!voted && !isExpired) {
         <button tuiButton size="m" (click)="vote()" animate.leave="leave-animation">Votar</button>
       }

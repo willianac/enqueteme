@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { PollType } from '../../../../shared/types/Poll';
 import { PollApi } from '../../services/poll-api';
 import { UserApi } from '../../../auth/services/user-api';
+import { RouterLink } from '@angular/router';
 import {
   pluralizePt,
   pollDaysRemaining,
@@ -37,7 +38,8 @@ import {
     TuiIcon,
     TuiChip,
     TuiMessage,
-    CommonModule
+    CommonModule,
+    RouterLink,
   ],
   templateUrl: './poll.html',
   styleUrl: './poll.less',
@@ -55,6 +57,7 @@ export class Poll implements OnChanges {
   voted = false;
   idOptionChosen: null | number = null;
   noOptionChosenError = false;
+  copied = false;
 
   protected pollForm = new FormGroup({
     option: new FormControl<null | number>(null)
@@ -68,8 +71,30 @@ export class Poll implements OnChanges {
     return pollVotePercentage(votes, this.totalVotes);
   }
 
-  progressColor(index: number): string {
-    return pollProgressColor(index);
+  progressColor(isChosenOrIndex: boolean | number): string {
+    return pollProgressColor(isChosenOrIndex);
+  }
+
+  copyShareLink(event?: Event): void {
+    event?.stopPropagation();
+    const url = typeof window !== 'undefined'
+      ? `${window.location.origin}/polls/${this.pollData.id}`
+      : `/polls/${this.pollData.id}`;
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        this.copied = true;
+        this.cdr.markForCheck();
+        this.alerts.open('Link da enquete copiado para a área de transferência!', {
+          label: 'Link copiado',
+          appearance: 'positive',
+        }).subscribe();
+        setTimeout(() => {
+          this.copied = false;
+          this.cdr.markForCheck();
+        }, 2000);
+      });
+    }
   }
 
   pluralize(count: number, singular: string, plural: string): string {

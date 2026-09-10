@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TuiAlertService } from '@taiga-ui/core';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { UserApi } from '../../../auth/services/user-api';
 import { PollApi } from '../../services/poll-api';
@@ -19,6 +20,7 @@ describe('Poll', () => {
     await TestBed.configureTestingModule({
       imports: [Poll],
       providers: [
+        provideRouter([]),
         { provide: PollApi, useValue: pollApi },
         { provide: UserApi, useValue: { user: signal(null) } },
         { provide: TuiAlertService, useValue: alerts },
@@ -154,5 +156,72 @@ describe('Poll', () => {
 
     const chosenOption = el.querySelector('.option-name.chosen');
     expect(chosenOption?.textContent).toContain('A');
+  });
+
+  it('does not render tui-pin when poll is expired', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 4,
+      title: 'Expired Pin Test',
+      creatorName: 'Will',
+      expirationDate: '2020-01-01T00:00:00.000Z',
+      voteRequireLogin: false,
+      options: [
+        { id: 1, name: 'A', votes: 1 },
+      ],
+    });
+    fixture.detectChanges();
+
+    const pin = fixture.nativeElement.querySelector('tui-pin');
+    expect(pin).toBeNull();
+  });
+
+  it('hides "Requer login" chip when poll is expired or user has already voted', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 5,
+      title: 'Login Required Test',
+      creatorName: 'Will',
+      expirationDate: '2020-01-01T00:00:00.000Z',
+      voteRequireLogin: true,
+      hasVoted: false,
+      options: [
+        { id: 1, name: 'A', votes: 1 },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Requer login');
+  });
+
+  it('renders title as a link pointing to /polls/:id', () => {
+    const titleLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.title-link');
+    expect(titleLink).not.toBeNull();
+    expect(titleLink?.getAttribute('href')).toBe('/polls/1');
+  });
+
+  it('provides a share button to copy poll link', async () => {
+    const writeTextSpy = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextSpy,
+      },
+    });
+
+    const shareBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-share');
+    expect(shareBtn).not.toBeNull();
+    shareBtn?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(writeTextSpy).toHaveBeenCalledWith(expect.stringContaining('/polls/1'));
+    expect(alerts.open).toHaveBeenCalledWith(
+      'Link da enquete copiado para a área de transferência!',
+      expect.objectContaining({ label: 'Link copiado', appearance: 'positive' }),
+    );
+  });
+
+  it('progressColor returns accent color for chosen option and action blue for unchosen', () => {
+    const component = fixture.componentInstance;
+    expect(component.progressColor(true)).toBe('var(--tui-background-accent-2)');
+    expect(component.progressColor(false)).toBe('var(--tui-text-action)');
   });
 });

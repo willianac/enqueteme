@@ -126,6 +126,8 @@ describe('Enquetes API', () => {
         expect(response.body[0].hasVoted).toBe(true);
         expect(response.body[0].votedOptionId).toBe(20);
       });
+  });
+
   it('supports pagination via page and limit query params', async () => {
     prisma.enquete.findMany.mockResolvedValue([enquete]);
 
