@@ -1,6 +1,6 @@
 <header class="navbar">
   <div class="navbar-content">
-    <img src="assets/logo-clean.png" alt="Enqueteme" class="logo" routerLink="/">
+    <img src="assets/logo-clean.png" alt="Enqueteme" class="logo" [routerLink]="user() ? '/polls' : '/'">
     <nav class="navigation">
       @if(user(); as currentUser) {
         <div class="user-menu-container">

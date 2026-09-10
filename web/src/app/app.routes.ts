@@ -6,39 +6,51 @@ import { NewPoll } from './features/polls/components/new-poll/new-poll';
 import { MyPolls } from './features/polls/components/my-polls/my-polls';
 import { EditPoll } from './features/polls/components/edit-poll/edit-poll';
 import { authGuard } from './features/auth/auth.guard';
+import { unauthGuard } from './features/auth/unauth.guard';
+import { Home } from './features/home/home';
 
 export const routes: Routes = [
   {
-    path: "signin",
+    path: '',
+    component: Home,
+    canActivate: [unauthGuard],
+    title: 'Enqueteme - Crie e participe de enquetes em tempo real',
+  },
+  {
+    path: 'signin',
     component: Signin,
-    title: "Enqueteme - Entrar"
+    title: 'Enqueteme - Entrar',
   },
   {
-    path: "polls",
+    path: 'polls',
     component: Polls,
-    title: "Lista de Enquetes"
+    title: 'Lista de Enquetes',
   },
   {
-    path: "polls/:id",
+    path: 'polls/:id',
     component: PollDetail,
-    title: "Enquete"
+    title: 'Enquete',
   },
   {
-    path: "new-poll",
+    path: 'new-poll',
     component: NewPoll,
     canActivate: [authGuard],
-    title: "Nova enquete"
+    title: 'Nova enquete',
   },
   {
-    path: "my-polls",
+    path: 'my-polls',
     component: MyPolls,
     //canActivate: [authGuard],
-    title: "Minhas enquetes"
+    title: 'Minhas enquetes',
   },
   {
-    path: "my-polls/:id/edit",
+    path: 'my-polls/:id/edit',
     component: EditPoll,
     canActivate: [authGuard],
-    title: "Editar enquete"
-  }
+    title: 'Editar enquete',
+  },
+  {
+    path: '**',
+    redirectTo: 'polls',
+  },
 ];

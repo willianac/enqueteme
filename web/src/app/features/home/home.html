@@ -1,0 +1,225 @@
+<app-navbar></app-navbar>
+
+<main class="home-main">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <tui-icon icon="@tui.sparkles" class="badge-icon" />
+          <span>Plataforma simples de enquetes</span>
+        </div>
+
+        <h1 class="hero-title">
+          Crie enquetes e descubra opiniões em <span class="highlight">tempo real</span>
+        </h1>
+
+        <p class="hero-description">
+          O Enqueteme é a forma mais ágil de fazer perguntas, engajar sua audiência e acompanhar
+          votos com total transparência e dinamismo.
+        </p>
+
+        <div class="hero-actions">
+          <a tuiButton size="l" routerLink="/polls" class="btn-primary">
+            Explorar enquetes
+            <tui-icon icon="@tui.arrow-right" />
+          </a>
+          <a tuiButton appearance="flat" size="l" routerLink="/signin" class="btn-secondary">
+            Criar uma enquete
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">Gratuito e aberto</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num">Ao vivo</span>
+            <span class="stat-label">Votação instantânea</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-num">Google Auth</span>
+            <span class="stat-label">Login seguro</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Mockup Card -->
+      <div class="hero-preview">
+        <div tuiSurface="floating" class="mock-poll-card">
+          <div class="mock-header">
+            <div class="mock-author">
+              <tui-icon icon="@tui.circle-user" class="mock-avatar" />
+              <span class="mock-author-name">Enqueteme Comunitário</span>
+            </div>
+            <span class="mock-badge">Em andamento</span>
+          </div>
+
+          <h3 class="mock-title">Qual a melhor tecnologia para criar interfaces web modernas?</h3>
+
+          <div class="mock-options">
+            <div class="mock-option is-voted">
+              <div class="mock-option-top">
+                <div class="mock-option-label">
+                  <span>Angular</span>
+                  <tui-icon icon="@tui.circle-check" class="mock-check-icon" />
+                </div>
+                <span class="mock-option-votes">82 votos (64%)</span>
+              </div>
+              <div class="mock-progress-track">
+                <div class="mock-progress-bar highlight-bar" style="width: 64%;"></div>
+              </div>
+            </div>
+
+            <div class="mock-option">
+              <div class="mock-option-top">
+                <span class="mock-option-label">React</span>
+                <span class="mock-option-votes">31 votos (24%)</span>
+              </div>
+              <div class="mock-progress-track">
+                <div class="mock-progress-bar" style="width: 24%;"></div>
+              </div>
+            </div>
+
+            <div class="mock-option">
+              <div class="mock-option-top">
+                <span class="mock-option-label">Vue.js</span>
+                <span class="mock-option-votes">15 votos (12%)</span>
+              </div>
+              <div class="mock-progress-track">
+                <div class="mock-progress-bar" style="width: 12%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mock-footer">
+            <span class="mock-total">Total de Votos: 128 • Restam 2 dias</span>
+            <tui-icon icon="@tui.share-2" class="mock-share-icon" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-header">
+      <h2 class="section-title">Tudo o que você precisa para ouvir sua audiência</h2>
+      <p class="section-subtitle">
+        Desenvolvido para ser direto ao ponto: sem atritos, sem anúncios e com foco em usabilidade.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div tuiSurface="floating" class="feature-card">
+        <div class="feature-icon-box">
+          <tui-icon icon="@tui.zap" class="feature-icon" />
+        </div>
+        <h3 class="feature-title">Rápido e Descomplicado</h3>
+        <p class="feature-text">
+          Crie perguntas, adicione alternativas e configure datas de expiração em menos de um minuto.
+        </p>
+      </div>
+
+      <div tuiSurface="floating" class="feature-card">
+        <div class="feature-icon-box">
+          <tui-icon icon="@tui.chart-column" class="feature-icon" />
+        </div>
+        <h3 class="feature-title">Resultados em Tempo Real</h3>
+        <p class="feature-text">
+          Acompanhe votos e porcentagens consolidados instantaneamente com barras de progresso dinâmicas.
+        </p>
+      </div>
+
+      <div tuiSurface="floating" class="feature-card">
+        <div class="feature-icon-box">
+          <tui-icon icon="@tui.shield-check" class="feature-icon" />
+        </div>
+        <h3 class="feature-title">Votação Flexível e Segura</h3>
+        <p class="feature-text">
+          Crie enquetes abertas ao público em geral ou exija autenticação para garantir votos únicos e auditáveis.
+        </p>
+      </div>
+
+      <div tuiSurface="floating" class="feature-card">
+        <div class="feature-icon-box">
+          <tui-icon icon="@tui.share-2" class="feature-icon" />
+        </div>
+        <h3 class="feature-title">Compartilhamento Imediato</h3>
+        <p class="feature-text">
+          Copie o link direto com um clique para divulgar em redes sociais, mensagens ou canais de equipe.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="how-section">
+    <div class="section-header">
+      <h2 class="section-title">Como funciona</h2>
+      <p class="section-subtitle">Comece a usar em 3 passos fáceis.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-number">01</span>
+        <h3 class="step-title">Crie sua enquete</h3>
+        <p class="step-text">
+          Escreva a pergunta, cadastre as opções e escolha se o login é obrigatório para votar.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <span class="step-number">02</span>
+        <h3 class="step-title">Compartilhe o link</h3>
+        <p class="step-text">
+          Envie o link público da sua enquete para quem quiser participar, em qualquer dispositivo.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <span class="step-number">03</span>
+        <h3 class="step-title">Acompanhe os votos</h3>
+        <p class="step-text">
+          Veja a apuração dos resultados acontecer em tempo real e tome decisões inteligentes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA Banner -->
+  <section class="cta-section">
+    <div class="cta-banner">
+      <h2 class="cta-title">Pronto para criar sua primeira enquete?</h2>
+      <p class="cta-subtitle">
+        Junte-se à comunidade do Enqueteme e participe das decisões agora mesmo.
+      </p>
+      <div class="cta-buttons">
+        <a tuiButton size="l" routerLink="/polls" class="cta-btn-primary">
+          Ver todas as enquetes
+          <tui-icon icon="@tui.arrow-right" />
+        </a>
+        <a tuiButton appearance="flat" size="l" routerLink="/signin" class="cta-btn-secondary">
+          Entrar com Google
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="home-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <span class="footer-logo">Enqueteme</span>
+        <span class="footer-copy">Plataforma aberta e moderna de enquetes online.</span>
+      </div>
+      <div class="footer-links">
+        <a routerLink="/polls" class="footer-link">Enquetes</a>
+        <a routerLink="/signin" class="footer-link">Entrar</a>
+      </div>
+    </div>
+  </footer>
+</main>
