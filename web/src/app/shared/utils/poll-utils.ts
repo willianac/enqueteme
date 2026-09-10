@@ -1,11 +1,11 @@
 import { PollType } from '../types/Poll';
 
+export const DEFAULT_PROGRESS_COLOR = 'var(--tui-text-action)';
+export const CHOSEN_PROGRESS_COLOR = 'var(--tui-background-accent-2)';
+
 export const PROGRESS_COLORS = [
-  'var(--tui-text-action)',
-  'var(--tui-text-negative-hover)',
-  'var(--tui-text-positive-hover)',
-  'var(--tui-text-primary)',
-  'var(--tui-text-tertiary)',
+  DEFAULT_PROGRESS_COLOR,
+  CHOSEN_PROGRESS_COLOR,
 ];
 
 export function pollTotalVotes(options: PollType['options']): number {
@@ -17,8 +17,11 @@ export function pollVotePercentage(votes: number, totalVotes: number): number {
   return Math.round((votes / totalVotes) * 100);
 }
 
-export function pollProgressColor(index: number): string {
-  return PROGRESS_COLORS[index % PROGRESS_COLORS.length];
+export function pollProgressColor(isChosenOrIndex: boolean | number = false): string {
+  if (typeof isChosenOrIndex === 'boolean') {
+    return isChosenOrIndex ? CHOSEN_PROGRESS_COLOR : DEFAULT_PROGRESS_COLOR;
+  }
+  return DEFAULT_PROGRESS_COLOR;
 }
 
 export function pluralizePt(count: number, singular: string, plural: string): string {

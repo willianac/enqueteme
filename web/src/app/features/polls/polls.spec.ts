@@ -140,4 +140,49 @@ describe('Polls', () => {
     expect(fixture.nativeElement.textContent).toContain('Enquete 1');
     expect(fixture.nativeElement.textContent).toContain('Enquete 11');
   });
+
+  it('filters polls by "Ativas" and "Encerradas"', async () => {
+    const mixedPolls: PollType[] = [
+      {
+        id: 1,
+        title: 'Enquete Ativa',
+        creatorName: 'Will',
+        expirationDate: '2099-12-31T23:59:59.000Z',
+        voteRequireLogin: false,
+        options: [{ id: 1, name: 'A', votes: 1 }],
+      },
+      {
+        id: 2,
+        title: 'Enquete Encerrada',
+        creatorName: 'Will',
+        expirationDate: '2020-01-01T00:00:00.000Z',
+        voteRequireLogin: false,
+        options: [{ id: 1, name: 'B', votes: 2 }],
+      },
+    ];
+
+    pollApi.getAllPolls.mockReturnValue(of(mixedPolls));
+    fixture = TestBed.createComponent(Polls);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+
+    // Default "Todas" shows both
+    expect(fixture.nativeElement.textContent).toContain('Enquete Ativa');
+    expect(fixture.nativeElement.textContent).toContain('Enquete Encerrada');
+
+    // Filter "Ativas" (index 1)
+    component.onFilterChange(1);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Enquete Ativa');
+    expect(fixture.nativeElement.textContent).not.toContain('Enquete Encerrada');
+
+    // Filter "Encerradas" (index 2)
+    component.onFilterChange(2);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Enquete Ativa');
+    expect(fixture.nativeElement.textContent).toContain('Enquete Encerrada');
+  });
 });

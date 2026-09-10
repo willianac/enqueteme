@@ -12,6 +12,17 @@
 .poll-header {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+.title-link {
+  color: var(--tui-text-primary);
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+
+  &:hover {
+    color: var(--tui-background-accent-2);
+  }
 }
 
 .option:not(:last-child) {
@@ -23,12 +34,29 @@
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
+  gap: 0.5rem;
 }
 
 .creator {
   display: flex;
   align-items: center;
+  min-width: 0;
+}
+
+.creator-name {
+  color: var(--tui-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .creator-icon {
@@ -49,19 +77,30 @@ footer {
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  padding-top: 1rem;
 
   .poll-info {
     font-size: 13px;
     display: flex;
-    column-gap: 10px;
+    column-gap: 8px;
+    align-items: center;
   }
 
   .pin {
-    position: relative;
-    height: 5px;
-    width: 5px;
-    top: 12px;
-    left: 3px;
+    height: 4px;
+    width: 4px;
+  }
+
+  .footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-share {
+    min-width: 32px;
+    padding: 0 8px;
+    color: var(--tui-text-secondary);
   }
 }
 

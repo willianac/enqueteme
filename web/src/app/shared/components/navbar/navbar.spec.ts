@@ -24,14 +24,58 @@ describe('Navbar', () => {
     fixture.detectChanges();
   });
 
-  it('shows the restored user and logs out', () => {
+  it('shows the restored user and opens dropdown to log out', () => {
     expect(fixture.nativeElement.textContent).toContain('Olá, Will');
 
-    const buttons = Array.from(
+    const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector('.user-trigger');
+    expect(trigger).not.toBeNull();
+    trigger?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.open()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Minhas enquetes');
+
+    const logoutBtn: HTMLButtonElement | null = Array.from(
       fixture.nativeElement.querySelectorAll('button'),
-    ) as HTMLButtonElement[];
-    buttons.find((button) => button.textContent?.includes('Sair'))?.click();
+    ).find((b: unknown) => (b as HTMLElement).textContent?.includes('Sair')) as HTMLButtonElement;
+
+    expect(logoutBtn).toBeDefined();
+    logoutBtn?.click();
 
     expect(logout).toHaveBeenCalledOnce();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+
+  it('toggles dropdown open and closed on trigger clicks', () => {
+    const trigger: HTMLButtonElement | null = fixture.nativeElement.querySelector('.user-trigger');
+    expect(trigger).not.toBeNull();
+    expect(fixture.componentInstance.open()).toBe(false);
+
+    trigger?.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(true);
+
+    trigger?.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+
+  it('closes dropdown when escape key is pressed', () => {
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onEscape();
+    expect(fixture.componentInstance.open()).toBe(false);
+  });
+
+  it('closes dropdown when clicking outside', () => {
+    fixture.componentInstance.open.set(true);
+    fixture.detectChanges();
+
+    const outsideEvent = new MouseEvent('click', { bubbles: true });
+    Object.defineProperty(outsideEvent, 'target', { value: document.body });
+
+    fixture.componentInstance.onDocumentClick(outsideEvent);
+    expect(fixture.componentInstance.open()).toBe(false);
   });
 });
