@@ -23,6 +23,7 @@ services:
       GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID:-}'
       GOOGLE_CLIENT_SECRET: '${GOOGLE_CLIENT_SECRET:-}'
       GOOGLE_CALLBACK_URL: '${GOOGLE_CALLBACK_URL:-http://localhost:4200/api/auth/google/callback}'
+      OPENROUTER_API_KEY: '${OPENROUTER_API_KEY:-}'
       WEB_URL: '${WEB_URL:-http://localhost:4200}'
     depends_on:
       db:
