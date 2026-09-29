@@ -42,3 +42,7 @@ Use the established lowercase prefixes: `feat:`, `fix:`, `test:`, `chore:`, or `
 ## Configuration and Secrets
 
 Treat the Compose MySQL credentials as local-development values only. Do not commit production secrets or `api/.env`; document required variables in `api/.env.example`.
+
+Notes:
+- Ask whether to use sub-agents only when parallel work would produce a meaningful performance gain for the task. Y/N
+- If I ask for commits, use these commit conventions: `feat`, `fix`, `refactor`, `style`, `chore`, `build`, `test`.
