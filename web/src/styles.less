@@ -1,6 +1,20 @@
-html, * {
-    padding: 0;
-    margin: 0;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+[tuiCardLarge],
+[tuiCardMedium],
+.poll-card {
+  overscroll-behavior: auto !important;
 }
 
 :root {
