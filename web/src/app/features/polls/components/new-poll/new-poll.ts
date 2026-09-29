@@ -18,6 +18,7 @@ import { CommonModule } from '@angular/common';
 import { PollApi } from '../../services/poll-api';
 import { RouterLink } from '@angular/router';
 import { UserApi } from '../../../auth/services/user-api';
+import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspector';
 
 @Component({
   selector: 'app-new-poll',
@@ -38,7 +39,8 @@ import { UserApi } from '../../../auth/services/user-api';
     TuiSwitch,
     RouterLink,
     TuiError,
-    TuiSurface
+    TuiSurface,
+    NeutralityInspector,
   ],
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
@@ -74,6 +76,33 @@ export class NewPoll implements OnInit {
 
   public getOptionsKeys(): string[] {
     return Object.keys(this.newPollForm.controls);
+  }
+
+  public getOptionsValues(): string[] {
+    const raw = this.newPollForm.getRawValue() as Record<string, string>;
+    return Object.values(raw);
+  }
+
+  public get canAddMoreOptions(): boolean {
+    return this.numberOfOptions < 5;
+  }
+
+  public onApplySuggestedTitle(title: string): void {
+    this.pollTitle = title;
+  }
+
+  public onAddSuggestedOption(optionText: string): void {
+    if (this.numberOfOptions >= 5) {
+      this.alerts
+        .open('Limite máximo de 5 opções já atingido.', { label: 'Aviso', appearance: 'warning' })
+        .subscribe();
+      return;
+    }
+    this.numberOfOptions += 1;
+    this.newPollForm.addControl(
+      `option${this.numberOfOptions}`,
+      new FormControl<string>(optionText, { nonNullable: true })
+    );
   }
 
   public removeOption(e: string) {

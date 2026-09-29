@@ -60,6 +60,14 @@
             </button>
           </div>
 
+          <app-neutrality-inspector
+            [title]="pollTitle"
+            [options]="getOptionsValues()"
+            [canAddMoreOptions]="canAddMoreOptions"
+            (applyTitle)="onApplySuggestedTitle($event)"
+            (addOption)="onAddSuggestedOption($event)"
+          />
+
           <div class="poll-settings">
             <div class="left">
               <span class="label text-muted" style="margin-bottom: 6px;">Duração da enquete (em dias)</span>
