@@ -114,4 +114,96 @@ describe('AI API (Neutrality & Bias Inspector)', () => {
     expect(response.body).toHaveProperty('suggestedTitle');
     expect(response.body).toHaveProperty('suggestedOptionsToAdd');
   });
+
+  describe('POST /ai/generate-poll', () => {
+    it('rejects unauthenticated requests with 401', async () => {
+      await request(app.getHttpServer())
+        .post('/ai/generate-poll')
+        .send({
+          prompt: 'Qual o melhor banco de dados para analytics?',
+        })
+        .expect(401);
+    });
+
+    it('rejects invalid payloads with 400 when prompt is empty or too short', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      await request(app.getHttpServer())
+        .post('/ai/generate-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          prompt: 'ab',
+        })
+        .expect(400);
+    });
+
+    it('rejects invalid payloads with 400 when prompt exceeds 300 characters', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      await request(app.getHttpServer())
+        .post('/ai/generate-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          prompt: 'a'.repeat(301),
+        })
+        .expect(400);
+    });
+
+    it('returns 201 with generated title and options when authenticated and valid', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/ai/generate-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          prompt: 'Melhor banco de dados para analytics em tempo real',
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('title');
+      expect(typeof response.body.title).toBe('string');
+      expect(response.body).toHaveProperty('options');
+      expect(Array.isArray(response.body.options)).toBe(true);
+      expect(response.body.options.length).toBeGreaterThanOrEqual(2);
+      expect(response.body.options.length).toBeLessThanOrEqual(5);
+    });
+
+    it('returns 201 with generated title and options when currentOptions is provided', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/ai/generate-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          prompt: 'Bancos para analytics em tempo real',
+          currentOptions: ['ClickHouse', 'Pinot'],
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('title');
+      expect(response.body).toHaveProperty('options');
+      expect(response.body.options.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
+

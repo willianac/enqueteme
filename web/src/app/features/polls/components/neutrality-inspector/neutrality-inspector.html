@@ -20,7 +20,7 @@
   }
 
   @if (loading()) {
-    <div tuiCardLarge tuiSurface="floating" class="report-card loading-card">
+    <div class="report-card loading-card">
       <div class="loading-container">
         <tui-loader [showLoader]="true" [inheritColor]="false" size="m" class="loading-spinner" />
         <span class="loading-text">Analisando viés cognitivo, neutralidade e equilíbrio das opções...</span>
@@ -29,14 +29,14 @@
   }
 
   @if (result(); as report) {
-    <div tuiCardLarge tuiSurface="floating" class="report-card">
-      <div tuiHeader class="card-header">
+    <div class="report-card">
+      <div class="card-header">
         <div class="header-left">
           <tui-icon icon="@tui.sparkles" class="sparkle-header-icon" />
-          <h4 tuiTitle class="card-title">
-            Relatório de Neutralidade
-            <span tuiSubtitle>Análise metodológica assistida por IA</span>
-          </h4>
+          <div class="title-wrapper">
+            <h4 class="card-title">Relatório de Neutralidade</h4>
+            <span class="card-subtitle text-muted">Análise metodológica assistida por IA</span>
+          </div>
         </div>
         <div class="header-right">
           <tui-chip

@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { OpenRouter } from '@openrouter/sdk';
 import { InspectPollBiasResponse } from './interfaces/bias-inspector.interface';
+import { GeneratePollResponse } from './interfaces/generate-poll.interface';
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -117,6 +118,96 @@ Retorne apenas o JSON puro, sem blocos markdown.`;
     } catch (error) {
       this.logger.error('Error during poll bias inspection', error);
       throw new Error('Falha ao inspecionar a neutralidade da enquete');
+    }
+  }
+
+  async generatePoll(
+    prompt: string,
+    currentOptions?: string[],
+  ): Promise<GeneratePollResponse> {
+    const systemPrompt = `Você é um especialista em metodologia de pesquisas de opinião pública, design de questionários e formulação de enquetes.
+Sua missão é receber um tema, rascunho de pergunta ou ideia fornecido pelo usuário e gerar uma enquete estruturada, imparcial e de alta qualidade metodológica.
+
+Diretrizes obrigatórias:
+1. Título/Pergunta: Formule uma pergunta neutra, clara, concisa e envolvente (no mesmo idioma do prompt do usuário, prioritariamente em Português). Nunca use perguntas tendenciosas ou que induzam respostas.
+2. Opções de resposta (princípio MECE - Mutuamente Exclusivas e Coletivamente Exaustivas):
+   - Gere entre 2 e 5 opções balanceadas e pertinentes ao tema (o sistema suporta no máximo 5 opções).
+   - Se o usuário já tiver fornecido opções existentes, leve-as em consideração, refinando-as ou sugerindo alternativas que completem o conjunto.
+   - Quando fizer sentido, inclua uma opção como "Outro", "Nenhum dos anteriores" ou "Não sei / Ver resultados" para não forçar escolhas.
+   - Garanta que a quantidade total de opções seja no mínimo 2 e no máximo 5.
+
+IMPORTANTE: Responda estritamente em formato JSON válido com este esquema:
+{
+  "title": string,
+  "options": string[] // lista contendo de 2 a 5 strings de opções
+}
+Retorne apenas o JSON puro, sem blocos markdown.`;
+
+    const userPayload: Record<string, any> = {
+      prompt: prompt.trim(),
+    };
+    if (currentOptions && currentOptions.length > 0) {
+      userPayload.currentOptions = currentOptions
+        .map((opt) => opt.trim())
+        .filter((opt) => opt.length > 0);
+    }
+
+    try {
+      const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+      const response = await this.client.chat.send({
+        chatRequest: {
+          model,
+          responseFormat: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Gere a enquete com base nas informações:\n${JSON.stringify(userPayload)}`,
+            },
+          ],
+        },
+      });
+
+      if (response instanceof ReadableStream) {
+        throw new Error('Expected non-streaming response from OpenRouter');
+      }
+
+      const rawContent = response.choices?.[0]?.message?.content;
+      if (!rawContent || typeof rawContent !== 'string') {
+        throw new Error('Empty response from AI model');
+      }
+
+      const cleanJson = rawContent
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+
+      const parsed = JSON.parse(cleanJson) as GeneratePollResponse;
+
+      const title =
+        typeof parsed.title === 'string' && parsed.title.trim().length > 0
+          ? parsed.title.trim()
+          : prompt.trim();
+
+      const options = Array.isArray(parsed.options)
+        ? parsed.options
+            .map((opt) => (typeof opt === 'string' ? opt.trim() : ''))
+            .filter((opt) => opt.length > 0)
+            .slice(0, 5)
+        : [];
+
+      if (options.length < 2) {
+        throw new Error('O modelo não gerou o número mínimo de 2 opções');
+      }
+
+      return {
+        title,
+        options,
+      };
+    } catch (error) {
+      this.logger.error('Error during poll generation', error);
+      throw new Error('Falha ao gerar enquete com inteligência artificial');
     }
   }
 }

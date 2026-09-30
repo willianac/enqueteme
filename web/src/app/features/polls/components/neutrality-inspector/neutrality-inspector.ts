@@ -14,11 +14,8 @@ import {
   TuiButton,
   TuiIcon,
   TuiLoader,
-  TuiSurface,
-  TuiTitle,
 } from '@taiga-ui/core';
 import { TuiButtonClose, TuiChip } from '@taiga-ui/kit';
-import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { PollApi } from '../../services/poll-api';
 import {
   BiasInspectorIssue,
@@ -33,12 +30,8 @@ import {
     TuiButton,
     TuiIcon,
     TuiLoader,
-    TuiSurface,
-    TuiTitle,
     TuiChip,
     TuiButtonClose,
-    TuiCardLarge,
-    TuiHeader,
   ],
   templateUrl: './neutrality-inspector.html',
   styleUrl: './neutrality-inspector.less',

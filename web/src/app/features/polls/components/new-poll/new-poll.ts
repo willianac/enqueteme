@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiPlatform, TuiValidationError } from '@taiga-ui/cdk';
@@ -9,9 +9,10 @@ import {
   TuiIcon,
   TuiAlertService,
   TuiError,
-  TuiSurface
+  TuiSurface,
+  TuiLoader,
 } from '@taiga-ui/core';
-import { TuiButtonClose, TuiSlider, TuiSwitch } from '@taiga-ui/kit';
+import { TuiButtonClose, TuiSlider, TuiSwitch, TuiTabs } from '@taiga-ui/kit';
 
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -19,6 +20,7 @@ import { PollApi } from '../../services/poll-api';
 import { RouterLink } from '@angular/router';
 import { UserApi } from '../../../auth/services/user-api';
 import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspector';
+import { PollCopilot } from '../poll-copilot/poll-copilot';
 
 @Component({
   selector: 'app-new-poll',
@@ -41,6 +43,9 @@ import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspecto
     TuiError,
     TuiSurface,
     NeutralityInspector,
+    PollCopilot,
+    TuiTabs,
+    TuiLoader,
   ],
   templateUrl: './new-poll.html',
   styleUrl: './new-poll.less',
@@ -65,6 +70,94 @@ export class NewPoll implements OnInit {
   numberOfOptions = 2;
 
   pollWasCreated = false;
+  activeTabIndex = 0;
+
+  readonly copilotLoading = signal(false);
+  readonly showOptionCopilotPreview = signal(false);
+  readonly suggestedOptions = signal<string[]>([]);
+
+  public get canSuggestOptionsForTitle(): boolean {
+    return this.pollTitle.trim().length >= 3 && !this.copilotLoading();
+  }
+
+  public suggestOptionsForTitle(): void {
+    if (!this.canSuggestOptionsForTitle) {
+      this.alerts
+        .open('Digite ao menos 3 caracteres no título para sugerir opções com IA.', {
+          label: 'Título muito curto',
+          appearance: 'warning',
+        })
+        .subscribe();
+      return;
+    }
+
+    this.copilotLoading.set(true);
+    const existingOptions = this.getOptionsValues().filter((o) => o.trim().length > 0);
+
+    this.pollApi
+      .generatePoll({
+        prompt: this.pollTitle.trim(),
+        currentOptions: existingOptions.length > 0 ? existingOptions : undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.suggestedOptions.set(res.options);
+          this.showOptionCopilotPreview.set(true);
+          this.copilotLoading.set(false);
+        },
+        error: (err) => {
+          this.copilotLoading.set(false);
+          console.error(err);
+          this.alerts
+            .open('Não foi possível sugerir opções no momento.', {
+              label: 'Erro com IA',
+              appearance: 'negative',
+            })
+            .subscribe();
+        },
+      });
+  }
+
+  public setOptionsList(options: string[]): void {
+    const valid = options.filter((o) => o.trim().length > 0).slice(0, 5);
+    const count = Math.max(2, valid.length);
+    const newGroup: Record<string, FormControl<string>> = {};
+    for (let i = 1; i <= count; i++) {
+      newGroup[`option${i}`] = new FormControl<string>(valid[i - 1] || '', { nonNullable: true });
+    }
+    this.newPollForm = new FormGroup(newGroup);
+    this.numberOfOptions = count;
+  }
+
+  public onApplyCopilotPoll(poll: { title: string; options: string[] }): void {
+    this.pollTitle = poll.title;
+    this.setOptionsList(poll.options);
+    this.activeTabIndex = 0;
+    this.alerts
+      .open('Enquete preenchida com sucesso pelo Co-pilot!', {
+        label: 'Sucesso',
+        appearance: 'positive',
+      })
+      .subscribe();
+  }
+
+  public replaceWithSuggestedOptions(): void {
+    const options = this.suggestedOptions();
+    if (options.length >= 2) {
+      this.setOptionsList(options);
+      this.showOptionCopilotPreview.set(false);
+      this.alerts
+        .open('Opções atualizadas com sucesso!', {
+          label: 'Atualizado',
+          appearance: 'positive',
+        })
+        .subscribe();
+    }
+  }
+
+  public dismissOptionCopilotPreview(): void {
+    this.showOptionCopilotPreview.set(false);
+  }
 
   public addOption() {
     this.numberOfOptions += 1;

@@ -1,0 +1,169 @@
+<div class="poll-copilot-container">
+  <div class="prompt-section">
+    <label class="prompt-label" for="copilot-prompt-input">
+      <tui-icon icon="@tui.sparkles" class="label-sparkle" />
+      Descreva o tema ou a dúvida da sua enquete
+    </label>
+
+    <div class="prompt-input-row">
+      <tui-textfield tuiTextfieldSize="m" class="prompt-input">
+        <input
+          id="copilot-prompt-input"
+          placeholder="Ex: Qual a melhor linguagem para microsserviços em 2026?"
+          [ngModel]="prompt()"
+          (ngModelChange)="prompt.set($event)"
+          (keydown.enter)="canGenerate() && generate()"
+          tuiTextfield
+        />
+      </tui-textfield>
+
+      <button
+        tuiButton
+        type="button"
+        size="m"
+        appearance="primary"
+        class="generate-btn"
+        [disabled]="!canGenerate()"
+        (click)="generate()"
+      >
+        <tui-icon icon="@tui.sparkles" class="btn-icon" />
+        <span class="btn-text">Gerar com IA</span>
+      </button>
+    </div>
+
+    <!-- Inspiration Chips -->
+    <div class="inspiration-row">
+      <span class="inspiration-label">Sugestões de temas:</span>
+      <div class="inspiration-chips">
+        @for (topic of inspirationTopics; track topic) {
+          <button
+            tuiChip
+            type="button"
+            size="s"
+            appearance="neutral"
+            class="inspiration-chip"
+            (click)="useTopic(topic)"
+            [disabled]="loading()"
+          >
+            {{ topic }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="copilot-card loading-card">
+      <div class="loading-content">
+        <tui-loader [showLoader]="true" [inheritColor]="false" size="m" class="loading-spinner" />
+        <div class="loading-texts">
+          <span class="loading-title">Criando enquete balanceada...</span>
+          <span class="loading-sub text-muted">
+            Formulando pergunta neutra e opções mutuamente exclusivas e coletivamente exaustivas (MECE).
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Result Preview Card -->
+  @if (result(); as res) {
+    <div class="copilot-card result-card">
+      <div class="card-header">
+        <div class="header-title-box">
+          <tui-icon icon="@tui.sparkles" class="header-sparkle" />
+          <div>
+            <h4 class="card-title">Enquete Sugerida</h4>
+            <span class="card-subtitle text-muted">Revise os dados abaixo antes de aplicar ao formulário</span>
+          </div>
+        </div>
+        <button
+          tuiIconButton
+          tuiButtonClose
+          type="button"
+          size="xs"
+          (click)="dismiss()"
+          class="close-btn"
+          title="Fechar sugestão"
+        >
+          Fechar
+        </button>
+      </div>
+
+      <div class="card-body">
+        <div class="preview-field">
+          <label class="field-label" for="suggested-title-input">Pergunta da enquete</label>
+          <tui-textfield tuiTextfieldSize="m">
+            <input
+              id="suggested-title-input"
+              [ngModel]="customTitle()"
+              (ngModelChange)="customTitle.set($event)"
+              tuiTextfield
+            />
+          </tui-textfield>
+        </div>
+
+        <div class="options-selection-section">
+          <div class="options-selection-header">
+            <span class="field-label">Opções recomendadas (clique para selecionar/desmarcar):</span>
+            <small class="selection-count text-muted">
+              {{ selectedCount() }} de {{ res.options.length }} selecionadas (mínimo 2, máximo 5)
+            </small>
+          </div>
+
+          <div class="options-pills-grid">
+            @for (option of res.options; track option) {
+              <div
+                class="option-pill"
+                [class.selected]="selectedOptions().has(option)"
+                (click)="toggleOption(option)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="toggleOption(option)"
+                (keydown.space)="toggleOption(option); $event.preventDefault()"
+              >
+                <div class="pill-check-indicator">
+                  @if (selectedOptions().has(option)) {
+                    <tui-icon icon="@tui.circle-check" class="check-icon" />
+                  } @else {
+                    <div class="unchecked-circle"></div>
+                  }
+                </div>
+                <span class="pill-label">{{ option }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <button
+          tuiButton
+          type="button"
+          size="s"
+          appearance="flat"
+          (click)="generate()"
+          [disabled]="loading()"
+          class="footer-btn"
+        >
+          <tui-icon icon="@tui.rotate-cw" class="btn-icon" />
+          <span class="btn-text">Gerar novamente</span>
+        </button>
+
+        <button
+          tuiButton
+          type="button"
+          size="s"
+          appearance="primary"
+          [disabled]="!canApply()"
+          (click)="onApply()"
+          class="footer-btn"
+        >
+          <tui-icon icon="@tui.check" class="btn-icon" />
+          <span class="btn-text">Aplicar à enquete</span>
+        </button>
+      </div>
+    </div>
+  }
+</div>

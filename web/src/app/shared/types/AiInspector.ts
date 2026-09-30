@@ -22,3 +22,14 @@ export interface InspectPollBiasResponse {
   suggestedTitle?: string | null;
   suggestedOptionsToAdd?: string[];
 }
+
+export interface GeneratePollRequest {
+  prompt: string;
+  currentOptions?: string[];
+}
+
+export interface GeneratePollResponse {
+  title: string;
+  options: string[];
+}
+

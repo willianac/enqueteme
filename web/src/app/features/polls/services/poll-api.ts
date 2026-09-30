@@ -1,7 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { PollType } from '../../../shared/types/Poll';
-import { InspectPollBiasResponse } from '../../../shared/types/AiInspector';
+import {
+  GeneratePollRequest,
+  GeneratePollResponse,
+  InspectPollBiasResponse,
+} from '../../../shared/types/AiInspector';
 import { Observable } from 'rxjs';
 
 type CreatePollResponse = {
@@ -86,4 +90,9 @@ export class PollApi {
   }): Observable<InspectPollBiasResponse> {
     return this.http.post<InspectPollBiasResponse>(`${this.apiUrl}ai/inspect-bias`, request);
   }
+
+  public generatePoll(request: GeneratePollRequest): Observable<GeneratePollResponse> {
+    return this.http.post<GeneratePollResponse>(`${this.apiUrl}ai/generate-poll`, request);
+  }
 }
+

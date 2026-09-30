@@ -19,12 +19,12 @@ While basic natural-language poll generation ("Prompt to Poll") is a common star
 
 ### 1. Creation & Authoring
 
-#### A. "Prompt to Poll" & Option Co-Pilot
+#### A. "Prompt to Poll" & Option Co-Pilot (DONE)
 * **Concept:** The user provides a brief topic or question (e.g., *"Best database for real-time analytics"*), and the AI suggests balanced, mutually exclusive, collectively exhaustive (MECE) options.
 * **Value:** Reduces friction when thinking through relevant choices or formatting options.
 * **Implementation:** NestJS endpoint receiving a topic prompt and returning a structured JSON schema `{ title: string, options: string[] }`.
 
-#### B. Neutrality & Bias Inspector (Quality Guard)
+#### B. Neutrality & Bias Inspector (Quality Guard) (DONE)
 * **Concept:** As the creator writes a question and options, the AI inspects the draft for cognitive biases and design flaws:
   * **Leading Questions:** Detects phrasing that nudges voters (e.g., *"Don't you agree that TypeScript is essential?"* -> suggests *"What is your preference regarding TypeScript adoption?"*).
   * **Missing Alternatives:** Flags omitted common answers (e.g., listing PostgreSQL and MySQL, but omitting SQLite or MariaDB).

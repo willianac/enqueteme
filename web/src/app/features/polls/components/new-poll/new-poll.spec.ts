@@ -27,6 +27,12 @@ describe('NewPoll', () => {
           useValue: {
             createPoll: vi.fn(),
             inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
+            generatePoll: vi.fn().mockReturnValue(
+              of({
+                title: 'Qual linguagem você prefere para microsserviços?',
+                options: ['Go', 'Rust', 'Java', 'Node.js', 'Outro'],
+              }),
+            ),
           },
         },
         { provide: TuiAlertService, useValue: { open: () => of(undefined) } },
@@ -40,6 +46,20 @@ describe('NewPoll', () => {
 
   it('creates the authenticated poll form', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('switches between Manual and Co-pilot tabs', async () => {
+    expect(component.activeTabIndex).toBe(0);
+
+    component.activeTabIndex = 1;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.activeTabIndex).toBe(1);
+
+    component.activeTabIndex = 0;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.activeTabIndex).toBe(0);
   });
 
   it('updates poll title when onApplySuggestedTitle is called', () => {
@@ -67,4 +87,36 @@ describe('NewPoll', () => {
     component.onAddSuggestedOption('Opção 6');
     expect(component.numberOfOptions).toBe(5);
   });
+
+  it('applies full poll from co-pilot and switches to manual tab', () => {
+    component.activeTabIndex = 1;
+    component.onApplyCopilotPoll({
+      title: 'Melhor framework web em 2026',
+      options: ['Angular', 'Next.js', 'Vue / Nuxt'],
+    });
+
+    expect((component as any).pollTitle).toBe('Melhor framework web em 2026');
+    expect(component.numberOfOptions).toBe(3);
+    expect(component.getOptionsValues()).toEqual(['Angular', 'Next.js', 'Vue / Nuxt']);
+    expect(component.activeTabIndex).toBe(0);
+  });
+
+  it('suggests options for existing title and allows replacing options', () => {
+    (component as any).pollTitle = 'Qual linguagem você prefere para microsserviços?';
+    fixture.detectChanges();
+
+    expect(component.canSuggestOptionsForTitle).toBe(true);
+
+    component.suggestOptionsForTitle();
+    expect(component.copilotLoading()).toBe(false);
+    expect(component.showOptionCopilotPreview()).toBe(true);
+    expect(component.suggestedOptions().length).toBe(5);
+
+    component.replaceWithSuggestedOptions();
+    expect(component.showOptionCopilotPreview()).toBe(false);
+    expect(component.numberOfOptions).toBe(5);
+    expect(component.getOptionsValues()).toContain('Go');
+    expect(component.getOptionsValues()).toContain('Rust');
+  });
 });
+
