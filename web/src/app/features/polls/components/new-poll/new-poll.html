@@ -6,88 +6,214 @@
     <div tuiPlatform="web">
       @if(!pollWasCreated) {
       <div tuiCardLarge class="poll-card" tuiSurface="floating" >
-        <header tuiHeader>
-          <tui-icon icon="@tui.circle-user" />
-          <small> Willian Almeida </small>
+        <header tuiHeader class="poll-header">
+          <div class="author-badge">
+            <tui-icon icon="@tui.circle-user" class="author-icon" />
+            <span class="author-text">
+              Criando como <strong>{{ userApi.user()?.name || 'Autor' }}</strong>
+            </span>
+          </div>
         </header>
-        <section>
-          <div>
-            <tui-textfield tuiTextfieldSize="l">
-              <input placeholder="Dê um título a sua enquete" [(ngModel)]="pollTitle" tuiTextfield />
-            </tui-textfield>
-          </div>
 
-          <div class="add-options">
-            <form [formGroup]="newPollForm">
-              @for (option of getOptionsKeys() ; track option) {
-              <div
-                class="option-wrapper"
-                animate.enter="enter-animation"
-                animate.leave="leave-animation"
-              >
-                <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
-                  <input
-                    tuiTextfield
-                    placeholder="Opção {{ $index + 1 }}"
-                    [formControlName]="option"
-                  />
-                </tui-textfield>
-                <div class="remove-btn">
-                  @if ($index > 1) {
-                  <button
-                    tuiButtonClose
-                    tuiIconButton
-                    type="button"
-                    (click)="removeOption(option)"
-                    size="xs"
-                  >
-                    Close
-                  </button>
-                  }
-                </div>
-              </div>
-              }
-            </form>
-            <button
-              tuiButton
-              size="s"
-              (click)="addOption()"
-              class="add-option-btn"
-              type="button"
-              appearance="outline"
-            >
-              Adicionar opção
-            </button>
-          </div>
+        <nav tuiTabs [(activeItemIndex)]="activeTabIndex" class="creation-tabs">
+          <button tuiTab type="button" class="tab-btn">
+            <tui-icon icon="@tui.pencil" class="tab-icon" />
+            <span class="tab-text">Criação Manual</span>
+          </button>
+          <button tuiTab type="button" class="tab-btn">
+            <tui-icon icon="@tui.sparkles" class="tab-icon" />
+            <span class="tab-text">Co-pilot IA</span>
+          </button>
+        </nav>
 
-          <div class="poll-settings">
-            <div class="left">
-              <span class="label text-muted" style="margin-bottom: 6px;">Duração da enquete (em dias)</span>
-              <input
-                tuiSlider
-                type="range"
-                size="m"
-                [min]="1"
-                [max]="7"
-                [(ngModel)]="pollDuration"
-                [segments]="6"
+        <section class="creation-body">
+          @if (activeTabIndex === 1) {
+            <div class="copilot-tab-pane">
+              <app-poll-copilot
+                [initialPrompt]="pollTitle"
+                [currentOptions]="getOptionsValues()"
+                [canAddMoreOptions]="canAddMoreOptions"
+                (applyPoll)="onApplyCopilotPoll($event)"
+                (addOption)="onAddSuggestedOption($event)"
               />
-              <div class="ticks-labels">
-                <button *ngFor="let label of labels" type="button" class="tick-label">
-                  {{ label }}
+            </div>
+          } @else {
+            <div class="field-group">
+              <label class="field-label" for="poll-title-input">Pergunta ou título da enquete</label>
+              <tui-textfield tuiTextfieldSize="l">
+                <input
+                  id="poll-title-input"
+                  placeholder="Ex: Qual deve ser a prioridade da próxima release?"
+                  [(ngModel)]="pollTitle"
+                  tuiTextfield
+                />
+              </tui-textfield>
+            </div>
+
+            <div class="add-options">
+              <div class="options-header">
+                <div class="options-header-title">
+                  <span class="field-label">Opções de resposta</span>
+                  <small class="options-hint text-muted">Mínimo 2, máximo 5</small>
+                </div>
+                <button
+                  tuiButton
+                  size="xs"
+                  type="button"
+                  appearance="flat"
+                  class="suggest-options-btn"
+                  [disabled]="!canSuggestOptionsForTitle"
+                  (click)="suggestOptionsForTitle()"
+                  title="Sugerir opções com IA para este título"
+                >
+                  <tui-icon icon="@tui.sparkles" class="btn-sparkle-icon" />
+                  <span>Sugerir opções com IA</span>
                 </button>
               </div>
+
+              @if (copilotLoading()) {
+                <div class="options-copilot-loading">
+                  <tui-loader [showLoader]="true" size="s" />
+                  <span>Sugerindo opções balanceadas para o seu título...</span>
+                </div>
+              }
+
+              @if (showOptionCopilotPreview() && suggestedOptions().length > 0) {
+                <div class="options-copilot-preview">
+                  <div class="preview-header">
+                    <span class="preview-title">Opções sugeridas pela IA:</span>
+                    <button
+                      tuiIconButton
+                      tuiButtonClose
+                      type="button"
+                      size="xs"
+                      (click)="dismissOptionCopilotPreview()"
+                      title="Fechar sugestão"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                  <div class="suggested-chips-list">
+                    @for (sug of suggestedOptions(); track sug) {
+                      <div class="suggested-chip-item">
+                        <span class="chip-text">{{ sug }}</span>
+                        <button
+                          tuiButton
+                          size="xs"
+                          type="button"
+                          appearance="outline"
+                          [disabled]="!canAddMoreOptions"
+                          (click)="onAddSuggestedOption(sug)"
+                          title="Adicionar à lista"
+                        >
+                          + Adicionar
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  <div class="preview-actions">
+                    <button
+                      tuiButton
+                      size="xs"
+                      type="button"
+                      appearance="primary"
+                      (click)="replaceWithSuggestedOptions()"
+                    >
+                      Substituir todas as opções
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <form [formGroup]="newPollForm">
+                @for (option of getOptionsKeys() ; track option) {
+                <div
+                  class="option-wrapper"
+                  animate.enter="enter-animation"
+                  animate.leave="leave-animation"
+                >
+                  <tui-textfield tuiTextfieldSize="s" class="input" [tuiTextfieldCleaner]="false">
+                    <input
+                      tuiTextfield
+                      placeholder="Opção {{ $index + 1 }}"
+                      [formControlName]="option"
+                    />
+                  </tui-textfield>
+                  <div class="remove-btn">
+                    @if ($index > 1) {
+                    <button
+                      tuiButtonClose
+                      tuiIconButton
+                      type="button"
+                      (click)="removeOption(option)"
+                      size="xs"
+                      title="Remover opção"
+                    >
+                      Close
+                    </button>
+                    }
+                  </div>
+                </div>
+                }
+              </form>
+              <button
+                tuiButton
+                size="s"
+                (click)="addOption()"
+                class="add-option-btn"
+                type="button"
+                appearance="flat"
+                [disabled]="!canAddMoreOptions"
+              >
+                <tui-icon icon="@tui.plus" />
+                Adicionar opção
+              </button>
             </div>
-            <div class="right">
-              <span class="label text-muted">Exigir login para votar</span>
-              <input tuiSwitch type="checkbox" [(ngModel)]="requireLogin" />
+
+            <app-neutrality-inspector
+              [title]="pollTitle"
+              [options]="getOptionsValues()"
+              [canAddMoreOptions]="canAddMoreOptions"
+              (applyTitle)="onApplySuggestedTitle($event)"
+              (addOption)="onAddSuggestedOption($event)"
+            />
+
+            <div class="poll-settings">
+              <div class="left">
+                <label class="field-label">Duração da enquete (em dias)</label>
+                <input
+                  tuiSlider
+                  type="range"
+                  size="m"
+                  [min]="1"
+                  [max]="7"
+                  [(ngModel)]="pollDuration"
+                  [segments]="6"
+                />
+                <div class="ticks-labels">
+                  <button *ngFor="let label of labels" type="button" class="tick-label">
+                    {{ label }}
+                  </button>
+                </div>
+              </div>
+              <div class="right">
+                <div class="setting-info">
+                  <label class="field-label" for="require-login-toggle">Exigir login para votar</label>
+                  <small class="setting-hint text-muted">
+                    {{ requireLogin ? 'Apenas usuários autenticados poderão votar' : 'Qualquer pessoa com o link pode votar' }}
+                  </small>
+                </div>
+                <input id="require-login-toggle" tuiSwitch type="checkbox" [(ngModel)]="requireLogin" />
+              </div>
             </div>
-          </div>
+          }
         </section>
         <tui-error [error]="cannotCreatePollError" />
         <footer>
-          <button tuiButton appearance="secondary" size="m" routerLink="/polls">Voltar</button>
-          <button tuiButton appearance="primary" size="m" (click)="createPoll()" >Criar enquete</button>
+          <button tuiButton appearance="flat" size="m" routerLink="/polls">Voltar</button>
+          @if (activeTabIndex === 0) {
+            <button tuiButton appearance="primary" size="m" (click)="createPoll()" >Criar enquete</button>
+          }
         </footer>
       </div>
       } @else {

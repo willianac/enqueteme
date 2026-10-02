@@ -1,0 +1,167 @@
+<div class="neutrality-inspector-wrapper">
+  @if (!result() && !loading()) {
+    <div class="trigger-container">
+      <button
+        tuiButton
+        type="button"
+        size="s"
+        appearance="outline"
+        class="trigger-btn"
+        [disabled]="!canInspect"
+        (click)="inspect()"
+      >
+        <tui-icon icon="@tui.sparkles" class="sparkle-icon" />
+        Verificar Viés & Neutralidade (IA)
+      </button>
+      @if (!canInspect) {
+        <span class="hint-text">Preencha o título e ao menos 2 opções para inspecionar</span>
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="report-card loading-card">
+      <div class="loading-container">
+        <tui-loader [showLoader]="true" [inheritColor]="false" size="m" class="loading-spinner" />
+        <span class="loading-text">Analisando viés cognitivo, neutralidade e equilíbrio das opções...</span>
+      </div>
+    </div>
+  }
+
+  @if (result(); as report) {
+    <div class="report-card">
+      <div class="card-header">
+        <div class="header-left">
+          <tui-icon icon="@tui.sparkles" class="sparkle-header-icon" />
+          <div class="title-wrapper">
+            <h4 class="card-title">Relatório de Neutralidade</h4>
+            <span class="card-subtitle text-muted">Análise metodológica assistida por IA</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <tui-chip
+            size="s"
+            [appearance]="getScoreAppearance(report.score)"
+            class="score-chip"
+          >
+            {{ report.score }}/100 • {{ getScoreLabel(report.score) }}
+          </tui-chip>
+          <button
+            tuiIconButton
+            tuiButtonClose
+            type="button"
+            size="xs"
+            (click)="dismiss()"
+            class="close-btn"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+
+      <section class="card-body">
+        <p class="summary-text">{{ report.summary }}</p>
+
+        @if (report.issues.length > 0) {
+          <div class="issues-list">
+            <span class="section-label">Problemas e Oportunidades Identificados:</span>
+            @for (issue of report.issues; track $index) {
+              <div class="issue-item">
+                <div class="issue-badge-row">
+                  <tui-chip size="xs" [appearance]="getIssueChipAppearance(issue.severity)">
+                    {{ getIssueTypeLabel(issue.type) }}
+                  </tui-chip>
+                  <span class="issue-title">{{ issue.title }}</span>
+                </div>
+                <p class="issue-description">{{ issue.description }}</p>
+                @if (issue.suggestion) {
+                  <p class="issue-suggestion">
+                    <strong>Sugestão:</strong> {{ issue.suggestion }}
+                  </p>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="neutral-success">
+            <tui-icon icon="@tui.circle-check" class="success-icon" />
+            <span>Excelente! A formulação é neutra e as opções estão bem balanceadas.</span>
+          </div>
+        }
+
+        <!-- Quick 1-Click Actions -->
+        @if (report.suggestedTitle || (report.suggestedOptionsToAdd && report.suggestedOptionsToAdd.length > 0)) {
+          <div class="quick-actions">
+            <span class="section-label">Ações Rápidas (1 clique):</span>
+
+            @if (report.suggestedTitle) {
+              <div class="action-box">
+                <div class="action-info">
+                  <span class="action-type-label">Título Neutro Sugerido:</span>
+                  <p class="suggested-title-text">"{{ report.suggestedTitle }}"</p>
+                </div>
+                <button
+                  tuiButton
+                  size="s"
+                  type="button"
+                  [appearance]="appliedTitle() ? 'secondary' : 'primary'"
+                  [disabled]="appliedTitle()"
+                  (click)="onApplyTitle(report.suggestedTitle!)"
+                >
+                  @if (appliedTitle()) {
+                    <tui-icon icon="@tui.check" /> Aplicado
+                  } @else {
+                    Aplicar este título
+                  }
+                </button>
+              </div>
+            }
+
+            @if (report.suggestedOptionsToAdd && report.suggestedOptionsToAdd.length > 0) {
+              <div class="options-to-add">
+                <span class="action-type-label">Adicionar Alternativas / Válvulas de Escape:</span>
+                <div class="options-chips-grid">
+                  @for (option of report.suggestedOptionsToAdd; track option) {
+                    <div class="option-pill">
+                      <span class="option-pill-text">{{ option }}</span>
+                      <button
+                        tuiButton
+                        size="xs"
+                        type="button"
+                        [appearance]="addedOptions().has(option) ? 'secondary' : 'outline'"
+                        [disabled]="addedOptions().has(option) || !canAddMoreOptions"
+                        (click)="onAddOption(option)"
+                      >
+                        @if (addedOptions().has(option)) {
+                          <tui-icon icon="@tui.check" /> Adicionada
+                        } @else {
+                          + Adicionar
+                        }
+                      </button>
+                    </div>
+                  }
+                </div>
+                @if (!canAddMoreOptions) {
+                  <small class="limit-warning">Limite de 5 opções atingido.</small>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+
+      <footer class="card-footer">
+        <button
+          tuiButton
+          size="xs"
+          type="button"
+          appearance="flat"
+          (click)="inspect()"
+          [disabled]="loading()"
+        >
+          <tui-icon icon="@tui.rotate-cw" /> Reanalisar
+        </button>
+      </footer>
+    </div>
+  }
+</div>

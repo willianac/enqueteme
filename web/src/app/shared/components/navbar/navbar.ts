@@ -1,8 +1,9 @@
 import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TuiButton, TuiIcon, TuiSurface } from '@taiga-ui/core';
 import { UserApi } from '../../../features/auth/services/user-api';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -13,8 +14,19 @@ import { CommonModule } from '@angular/common';
 export class Navbar {
   readonly userApi = inject(UserApi);
   private readonly elementRef = inject(ElementRef);
+  private readonly router = inject(Router);
   protected readonly user = this.userApi.user;
   readonly open = signal(false);
+  readonly isNewPollPage = signal(false);
+
+  constructor() {
+    this.isNewPollPage.set(this.router.url.includes('/new-poll'));
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.isNewPollPage.set(this.router.url.includes('/new-poll'));
+      });
+  }
 
   toggleMenu(event?: Event): void {
     event?.stopPropagation();

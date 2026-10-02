@@ -25,6 +25,8 @@ services:
       GOOGLE_CALLBACK_URL: '${GOOGLE_CALLBACK_URL:-http://localhost:4200/api/auth/google/callback}'
       OPENROUTER_API_KEY: '${OPENROUTER_API_KEY:-}'
       WEB_URL: '${WEB_URL:-http://localhost:4200}'
+    ports:
+      - '8080:8080'
     depends_on:
       db:
         condition: service_healthy

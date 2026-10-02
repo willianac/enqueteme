@@ -78,4 +78,13 @@ describe('Navbar', () => {
     fixture.componentInstance.onDocumentClick(outsideEvent);
     expect(fixture.componentInstance.open()).toBe(false);
   });
+
+  it('hides "Nova enquete" button when on new poll page', () => {
+    expect(fixture.nativeElement.textContent).toContain('Nova enquete');
+
+    fixture.componentInstance.isNewPollPage.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Nova enquete');
+  });
 });

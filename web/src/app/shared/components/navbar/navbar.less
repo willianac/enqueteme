@@ -37,12 +37,21 @@
   .user-avatar-icon {
     font-size: 1.15rem;
     color: var(--tui-background-accent-2);
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .chevron-icon {
     font-size: 0.85rem;
     color: var(--tui-text-secondary);
     transition: transform 0.2s ease;
+    flex-shrink: 0;
   }
 }
 
@@ -151,7 +160,19 @@
     padding: 0 0.75rem;
 
     .logo {
-      width: 110px;
+      width: 95px;
     }
+
+    .navigation {
+      gap: 6px;
+
+      .btn-text {
+        display: none;
+      }
+    }
+  }
+
+  .user-trigger .user-name {
+    max-width: 85px;
   }
 }

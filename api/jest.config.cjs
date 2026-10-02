@@ -7,4 +7,7 @@ module.exports = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
+  moduleNameMapper: {
+    '^@openrouter/sdk$': '<rootDir>/test/mocks/openrouter.mock.ts',
+  },
 };
