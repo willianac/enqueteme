@@ -2,11 +2,16 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { OpenRouter } from '@openrouter/sdk';
 import { InspectPollBiasResponse } from './interfaces/bias-inspector.interface';
 import { GeneratePollResponse } from './interfaces/generate-poll.interface';
+import {
+  ExplainPollDebateResponse,
+  PollOptionDebateAnalysis,
+} from './interfaces/explain-poll.interface';
 
 @Injectable()
 export class AiService implements OnModuleInit {
   private readonly logger = new Logger(AiService.name);
   private client!: OpenRouter;
+  private readonly explanationCache = new Map<number, ExplainPollDebateResponse>();
 
   onModuleInit() {
     this.client = new OpenRouter({
@@ -208,6 +213,149 @@ Retorne apenas o JSON puro, sem blocos markdown.`;
     } catch (error) {
       this.logger.error('Error during poll generation', error);
       throw new Error('Falha ao gerar enquete com inteligência artificial');
+    }
+  }
+
+  clearExplanationCache(): void {
+    this.explanationCache.clear();
+  }
+
+  async explainPollDebate(
+    pollId: number,
+    title: string,
+    options: string[],
+  ): Promise<ExplainPollDebateResponse> {
+    if (this.explanationCache.has(pollId)) {
+      this.logger.log(`Serving cached explanation for pollId ${pollId}`);
+      return this.explanationCache.get(pollId)!;
+    }
+
+    const systemPrompt = `Você é um analista neutro, educador e especialista em debates públicos, metodologia e tecnologia.
+Sua missão é explicar para um participante de uma enquete o contexto do debate de forma 100% imparcial, apresentando prós e contras objetivos para cada opção disponível.
+
+Diretrizes obrigatórias:
+1. Imparcialidade estrita: NUNCA tome partido, nunca sugira qual opção é melhor ou recomendada, e nunca use juízo de valor opinativo. Mantenha um tom puramente descritivo, equilibrado e educativo.
+2. Contexto geral (overview): Forneça uma explicação concisa de 1 a 2 frases claras contextualizando por que esse assunto é debatido ou qual é o dilema/trade-off central (em Português).
+3. Análise das opções (options): Para CADA uma das opções fornecidas na enquete:
+   - Forneça o nome original da opção.
+   - Liste de 1 a 3 pontos fortes/argumentos a favor/vantagens (pros).
+   - Liste de 1 a 3 pontos de atenção/contra-argumentos/riscos/desvantagens (cons).
+   - Seja conciso e direto em cada ponto (frases curtas e informativas).
+
+IMPORTANTE: Responda estritamente em formato JSON válido com este esquema:
+{
+  "overview": string,
+  "options": [
+    {
+      "name": string,
+      "pros": string[],
+      "cons": string[]
+    }
+  ]
+}
+Retorne apenas o JSON puro, sem blocos markdown.`;
+
+    const cleanOptions = options
+      .map((opt) => opt.trim())
+      .filter((opt) => opt.length > 0);
+
+    const userPayload = {
+      title: title.trim(),
+      options: cleanOptions,
+    };
+
+    try {
+      const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+      const response = await this.client.chat.send({
+        chatRequest: {
+          model,
+          responseFormat: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Analise e explique o debate da enquete:\n${JSON.stringify(userPayload)}`,
+            },
+          ],
+        },
+      });
+
+      if (response instanceof ReadableStream) {
+        throw new Error('Expected non-streaming response from OpenRouter');
+      }
+
+      const rawContent = response.choices?.[0]?.message?.content;
+      if (!rawContent || typeof rawContent !== 'string') {
+        throw new Error('Empty response from AI model');
+      }
+
+      const cleanJson = rawContent
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+
+      const parsed = JSON.parse(cleanJson) as {
+        overview?: string;
+        options?: Array<{ name?: string; pros?: string[]; cons?: string[] }>;
+      };
+
+      const overview =
+        typeof parsed.overview === 'string' && parsed.overview.trim().length > 0
+          ? parsed.overview.trim()
+          : `Visão geral do debate sobre: "${title.trim()}".`;
+
+      const formattedOptions: PollOptionDebateAnalysis[] = cleanOptions.map(
+        (optName) => {
+          const matching = Array.isArray(parsed.options)
+            ? parsed.options.find(
+                (o) =>
+                  typeof o?.name === 'string' &&
+                  o.name.trim().toLowerCase() === optName.toLowerCase(),
+              )
+            : undefined;
+
+          const pros = Array.isArray(matching?.pros)
+            ? matching.pros
+                .filter(
+                  (p): p is string => typeof p === 'string' && p.trim().length > 0,
+                )
+                .map((p) => p.trim())
+            : [];
+
+          const cons = Array.isArray(matching?.cons)
+            ? matching.cons
+                .filter(
+                  (c): c is string => typeof c === 'string' && c.trim().length > 0,
+                )
+                .map((c) => c.trim())
+            : [];
+
+          return {
+            name: optName,
+            pros:
+              pros.length > 0
+                ? pros
+                : ['Ponto de vista favorável ao aspecto abordado.'],
+            cons:
+              cons.length > 0
+                ? cons
+                : ['Aspecto a ser considerado ou trade-off da abordagem.'],
+          };
+        },
+      );
+
+      const result: ExplainPollDebateResponse = {
+        pollId,
+        overview,
+        options: formattedOptions,
+      };
+
+      this.explanationCache.set(pollId, result);
+      return result;
+    } catch (error) {
+      this.logger.error('Error during poll debate explanation', error);
+      throw new Error('Falha ao explicar o debate da enquete');
     }
   }
 }

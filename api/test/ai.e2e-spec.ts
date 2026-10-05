@@ -205,5 +205,104 @@ describe('AI API (Neutrality & Bias Inspector)', () => {
       expect(response.body.options.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  describe('POST /ai/explain-poll', () => {
+    it('rejects unauthenticated requests with 401', async () => {
+      await request(app.getHttpServer())
+        .post('/ai/explain-poll')
+        .send({
+          pollId: 1,
+          title: 'TypeScript vs Python para backend?',
+          options: ['TypeScript', 'Python'],
+        })
+        .expect(401);
+    });
+
+    it('rejects invalid payloads with 400 when pollId is invalid or missing', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      await request(app.getHttpServer())
+        .post('/ai/explain-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          pollId: 0,
+          title: 'TypeScript vs Python',
+          options: ['TypeScript', 'Python'],
+        })
+        .expect(400);
+    });
+
+    it('rejects invalid payloads with 400 when options have fewer than 2 items', async () => {
+      prisma.sessao.findUnique.mockResolvedValueOnce({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      await request(app.getHttpServer())
+        .post('/ai/explain-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          pollId: 1,
+          title: 'TypeScript vs Python',
+          options: ['TypeScript'],
+        })
+        .expect(400);
+    });
+
+    it('returns 201 with overview and options analysis when authenticated and valid', async () => {
+      prisma.sessao.findUnique.mockResolvedValue({
+        id: 100n,
+        expiresAt: new Date(Date.now() + 60_000),
+        usuarioId: 1n,
+        usuario,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/ai/explain-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          pollId: 10,
+          title: 'TypeScript vs Python para novas APIs',
+          options: ['TypeScript', 'Python'],
+        })
+        .expect(201);
+
+      expect(response.body).toHaveProperty('pollId', 10);
+      expect(response.body).toHaveProperty('overview');
+      expect(typeof response.body.overview).toBe('string');
+      expect(response.body).toHaveProperty('options');
+      expect(Array.isArray(response.body.options)).toBe(true);
+      expect(response.body.options).toHaveLength(2);
+
+      const tsOption = response.body.options.find(
+        (o: any) => o.name === 'TypeScript',
+      );
+      expect(tsOption).toBeDefined();
+      expect(Array.isArray(tsOption.pros)).toBe(true);
+      expect(Array.isArray(tsOption.cons)).toBe(true);
+      expect(tsOption.pros.length).toBeGreaterThan(0);
+      expect(tsOption.cons.length).toBeGreaterThan(0);
+
+      // Verify in-memory cache hit for subsequent request
+      const cachedResponse = await request(app.getHttpServer())
+        .post('/ai/explain-poll')
+        .set('Cookie', 'enqueteme_session=mock-session-token')
+        .send({
+          pollId: 10,
+          title: 'TypeScript vs Python para novas APIs',
+          options: ['TypeScript', 'Python'],
+        })
+        .expect(201);
+
+      expect(cachedResponse.body).toEqual(response.body);
+    });
+  });
 });
 

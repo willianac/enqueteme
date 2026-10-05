@@ -40,7 +40,7 @@ While basic natural-language poll generation ("Prompt to Poll") is a common star
 
 ### 2. Voting & Voter Experience
 
-#### A. "Explain the Debate" (Context Briefing)
+#### A. "Explain the Debate" (Context Briefing) (DONE)
 * **Concept:** Voters often encounter niche or technical polls where they lack background context (e.g., *"Should we implement strict CSP or report-only?"*). A dedicated *"Explain"* action provides an objective, balanced modal/tooltip:
   * A 1–2 sentence overview of why this issue is actively debated.
   * Bulleted pros & cons for each option.
