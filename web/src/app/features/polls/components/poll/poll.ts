@@ -11,6 +11,7 @@ import { PollType } from '../../../../shared/types/Poll';
 import { PollApi } from '../../services/poll-api';
 import { UserApi } from '../../../auth/services/user-api';
 import { RouterLink } from '@angular/router';
+import { PollDebateDrawer } from '../poll-debate-drawer/poll-debate-drawer';
 import {
   pluralizePt,
   pollDaysRemaining,
@@ -40,6 +41,7 @@ import {
     TuiMessage,
     CommonModule,
     RouterLink,
+    PollDebateDrawer,
   ],
   templateUrl: './poll.html',
   styleUrl: './poll.less',
@@ -58,6 +60,25 @@ export class Poll implements OnChanges {
   idOptionChosen: null | number = null;
   noOptionChosenError = false;
   copied = false;
+  isDebateDrawerOpen = false;
+
+  get pollOptionsNames(): string[] {
+    return this.pollData.options?.map((o) => o.name) ?? [];
+  }
+
+  explainDebate(event?: Event): void {
+    event?.stopPropagation();
+    if (!this.userApi.user()) {
+      this.alerts
+        .open('É necessário fazer login para ver a explicação do debate com IA.', {
+          label: 'Faça login',
+          appearance: 'warning',
+        })
+        .subscribe();
+      return;
+    }
+    this.isDebateDrawerOpen = true;
+  }
 
   protected pollForm = new FormGroup({
     option: new FormControl<null | number>(null)

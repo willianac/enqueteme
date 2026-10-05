@@ -90,6 +90,18 @@
         appearance="flat"
         size="s"
         type="button"
+        class="btn-explain"
+        (click)="explainDebate($event)"
+        title="Entenda o debate com IA"
+      >
+        <tui-icon icon="@tui.sparkles" class="btn-sparkle-icon" />
+        <span>Entenda o debate</span>
+      </button>
+      <button
+        tuiButton
+        appearance="flat"
+        size="s"
+        type="button"
         class="btn-share"
         (click)="copyShareLink($event)"
         title="Copiar link da enquete"
@@ -105,3 +117,13 @@
     </div>
   </footer>
 </div>
+
+@if (isDebateDrawerOpen) {
+  <app-poll-debate-drawer
+    [pollId]="pollData.id"
+    [pollTitle]="pollData.title"
+    [options]="pollOptionsNames"
+    (close)="isDebateDrawerOpen = false"
+  />
+}
+

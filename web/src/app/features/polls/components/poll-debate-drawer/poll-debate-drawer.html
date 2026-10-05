@@ -1,0 +1,118 @@
+<div class="drawer-overlay" (click)="onClose()"></div>
+
+<tui-drawer class="debate-drawer" direction="right" [overlay]="false">
+  <header class="drawer-header">
+    <div class="header-top">
+      <div class="title-with-badge">
+        <tui-icon icon="@tui.sparkles" class="header-sparkle-icon" />
+        <h2 class="header-title">Entenda o debate</h2>
+      </div>
+      <button
+        tuiIconButton
+        tuiButtonClose
+        type="button"
+        size="s"
+        (click)="onClose()"
+        title="Fechar painel"
+      >
+        Fechar
+      </button>
+    </div>
+    <div class="poll-question-banner">
+      <span class="question-label">Enquete:</span>
+      <p class="question-text">{{ pollTitle }}</p>
+    </div>
+  </header>
+
+  <div class="drawer-body">
+    @if (loading()) {
+      <div class="drawer-loading">
+        <tui-loader [showLoader]="true" size="m" />
+        <p class="loading-text">Analisando argumentos e trade-offs do debate...</p>
+        <small class="loading-subtext text-muted">A IA está gerando uma síntese neutra e equilibrada das opções.</small>
+      </div>
+    } @else if (error()) {
+      <div class="drawer-error">
+        <tui-icon icon="@tui.triangle-alert" class="error-icon" />
+        <p class="error-text">{{ error() }}</p>
+        <button tuiButton appearance="outline" size="s" (click)="loadExplanation()">
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (explanation(); as exp) {
+      <div class="drawer-content">
+        <!-- Overview Section -->
+        <section class="overview-card">
+          <div class="overview-header">
+            <tui-icon icon="@tui.scale" class="overview-icon" />
+            <h3 class="overview-title">Contexto Geral</h3>
+          </div>
+          <p class="overview-text">{{ exp.overview }}</p>
+        </section>
+
+        <!-- Options Breakdown Section -->
+        <section class="options-analysis">
+          <h3 class="section-title">Análise por Opção</h3>
+
+          <div class="options-grid">
+            @for (opt of exp.options; track opt.name) {
+              <div class="option-analysis-card">
+                <header class="option-card-header">
+                  <h4 class="option-name">{{ opt.name }}</h4>
+                </header>
+
+                <div class="pros-cons-grid">
+                  <!-- Pros -->
+                  <div class="argument-block pros-block">
+                    <div class="argument-title-row">
+                      <tui-icon icon="@tui.thumbs-up" class="pro-icon" />
+                      <span class="argument-header-label pros-label">Prós / Vantagens</span>
+                    </div>
+                    <ul class="argument-list">
+                      @for (pro of opt.pros; track pro) {
+                        <li class="argument-item pro-item">
+                          <tui-icon icon="@tui.circle-check" class="bullet-icon pro-bullet" />
+                          <span>{{ pro }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+
+                  <!-- Cons -->
+                  <div class="argument-block cons-block">
+                    <div class="argument-title-row">
+                      <tui-icon icon="@tui.thumbs-down" class="con-icon" />
+                      <span class="argument-header-label cons-label">Contras / Trade-offs</span>
+                    </div>
+                    <ul class="argument-list">
+                      @for (con of opt.cons; track con) {
+                        <li class="argument-item con-item">
+                          <tui-icon icon="@tui.triangle-alert" class="bullet-icon con-bullet" />
+                          <span>{{ con }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    }
+  </div>
+
+  <footer class="drawer-footer">
+    <div class="disclaimer-row">
+      <tui-icon icon="@tui.info" class="disclaimer-icon" />
+      <span class="disclaimer-text">
+        Análise informativa gerada por IA. O Enqueteme mantém neutralidade estrita e não endossa nenhuma alternativa.
+      </span>
+    </div>
+    <div class="footer-btn-container">
+      <button tuiButton appearance="primary" size="s" (click)="onClose()">
+        Voltar para a enquete
+      </button>
+    </div>
+  </footer>
+</tui-drawer>

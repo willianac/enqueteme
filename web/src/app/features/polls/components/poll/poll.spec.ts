@@ -10,11 +10,16 @@ import { Poll } from './poll';
 
 describe('Poll', () => {
   let fixture: ComponentFixture<Poll>;
-  let pollApi: { setVote: ReturnType<typeof vi.fn> };
+  let pollApi: { setVote: ReturnType<typeof vi.fn>; explainPollDebate: ReturnType<typeof vi.fn> };
   let alerts: { open: ReturnType<typeof vi.fn> };
+  let userSig: ReturnType<typeof signal<{ name: string } | null>>;
 
   beforeEach(async () => {
-    pollApi = { setVote: vi.fn() };
+    userSig = signal<{ name: string } | null>(null);
+    pollApi = {
+      setVote: vi.fn(),
+      explainPollDebate: vi.fn().mockReturnValue(of({ pollId: 1, overview: 'Contexto', options: [] })),
+    };
     alerts = { open: vi.fn(() => of(undefined)) };
 
     await TestBed.configureTestingModule({
@@ -22,7 +27,7 @@ describe('Poll', () => {
       providers: [
         provideRouter([]),
         { provide: PollApi, useValue: pollApi },
-        { provide: UserApi, useValue: { user: signal(null) } },
+        { provide: UserApi, useValue: { user: userSig } },
         { provide: TuiAlertService, useValue: alerts },
       ],
     }).compileComponents();
@@ -223,5 +228,38 @@ describe('Poll', () => {
     const component = fixture.componentInstance;
     expect(component.progressColor(true)).toBe('var(--tui-background-accent-2)');
     expect(component.progressColor(false)).toBe('var(--tui-text-action)');
+  });
+
+  it('renders "Entenda o debate" button in footer', () => {
+    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
+    expect(explainBtn).not.toBeNull();
+    expect(explainBtn?.textContent).toContain('Entenda o debate');
+  });
+
+  it('shows an alert when unauthenticated user clicks "Entenda o debate"', () => {
+    userSig.set(null);
+    fixture.detectChanges();
+
+    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
+    explainBtn?.click();
+
+    expect(alerts.open).toHaveBeenCalledWith(
+      'É necessário fazer login para ver a explicação do debate com IA.',
+      expect.objectContaining({ label: 'Faça login', appearance: 'warning' }),
+    );
+    expect(fixture.componentInstance.isDebateDrawerOpen).toBe(false);
+  });
+
+  it('opens debate drawer when authenticated user clicks "Entenda o debate"', () => {
+    userSig.set({ name: 'Will' });
+    fixture.detectChanges();
+
+    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
+    explainBtn?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isDebateDrawerOpen).toBe(true);
+    const drawer = fixture.nativeElement.querySelector('app-poll-debate-drawer');
+    expect(drawer).not.toBeNull();
   });
 });

@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { PollType } from '../../../shared/types/Poll';
 import {
+  ExplainPollDebateRequest,
+  ExplainPollDebateResponse,
   GeneratePollRequest,
   GeneratePollResponse,
   InspectPollBiasResponse,
@@ -93,6 +95,15 @@ export class PollApi {
 
   public generatePoll(request: GeneratePollRequest): Observable<GeneratePollResponse> {
     return this.http.post<GeneratePollResponse>(`${this.apiUrl}ai/generate-poll`, request);
+  }
+
+  public explainPollDebate(
+    request: ExplainPollDebateRequest,
+  ): Observable<ExplainPollDebateResponse> {
+    return this.http.post<ExplainPollDebateResponse>(
+      `${this.apiUrl}ai/explain-poll`,
+      request,
+    );
   }
 }
 
