@@ -1,56 +1,192 @@
 <div class="poll-copilot-container">
-  <div class="prompt-section">
-    <label class="prompt-label" for="copilot-prompt-input">
-      <tui-icon icon="@tui.sparkles" class="label-sparkle" />
-      Descreva o tema ou a dúvida da sua enquete
-    </label>
+  <!-- Mode Selector Header -->
+  <div class="mode-selector-bar">
+    <button
+      tuiButton
+      type="button"
+      size="s"
+      [appearance]="mode() === 'quick' ? 'primary' : 'flat'"
+      class="mode-btn"
+      (click)="setMode('quick')"
+    >
+      <tui-icon icon="@tui.sparkles" class="btn-icon" />
+      <span>Ideia rápida</span>
+    </button>
+    <button
+      tuiButton
+      type="button"
+      size="s"
+      [appearance]="mode() === 'content' ? 'primary' : 'flat'"
+      class="mode-btn"
+      (click)="setMode('content')"
+    >
+      <tui-icon icon="@tui.link" class="btn-icon" />
+      <span>Texto ou Link</span>
+    </button>
+  </div>
 
-    <div class="prompt-input-row">
-      <tui-textfield tuiTextfieldSize="m" class="prompt-input">
-        <input
-          id="copilot-prompt-input"
-          placeholder="Ex: Qual a melhor linguagem para microsserviços em 2026?"
-          [ngModel]="prompt()"
-          (ngModelChange)="prompt.set($event)"
-          (keydown.enter)="canGenerate() && generate()"
-          tuiTextfield
-        />
-      </tui-textfield>
+  @if (mode() === 'quick') {
+    <div class="prompt-section">
+      <label class="prompt-label" for="copilot-prompt-input">
+        <tui-icon icon="@tui.sparkles" class="label-sparkle" />
+        Descreva o tema ou a dúvida da sua enquete
+      </label>
 
-      <button
-        tuiButton
-        type="button"
-        size="m"
-        appearance="primary"
-        class="generate-btn"
-        [disabled]="!canGenerate()"
-        (click)="generate()"
-      >
-        <tui-icon icon="@tui.sparkles" class="btn-icon" />
-        <span class="btn-text">Gerar com IA</span>
-      </button>
-    </div>
+      <div class="prompt-input-row">
+        <tui-textfield tuiTextfieldSize="m" class="prompt-input">
+          <input
+            id="copilot-prompt-input"
+            placeholder="Ex: Qual a melhor linguagem para microsserviços em 2026?"
+            [ngModel]="prompt()"
+            (ngModelChange)="prompt.set($event)"
+            (keydown.enter)="canGenerate() && generate()"
+            tuiTextfield
+          />
+        </tui-textfield>
 
-    <!-- Inspiration Chips -->
-    <div class="inspiration-row">
-      <span class="inspiration-label">Sugestões de temas:</span>
-      <div class="inspiration-chips">
-        @for (topic of inspirationTopics; track topic) {
-          <button
-            tuiChip
-            type="button"
-            size="s"
-            appearance="neutral"
-            class="inspiration-chip"
-            (click)="useTopic(topic)"
-            [disabled]="loading()"
-          >
-            {{ topic }}
-          </button>
-        }
+        <button
+          tuiButton
+          type="button"
+          size="m"
+          appearance="primary"
+          class="generate-btn"
+          [disabled]="!canGenerate()"
+          (click)="generate()"
+        >
+          <tui-icon icon="@tui.sparkles" class="btn-icon" />
+          <span class="btn-text">Gerar com IA</span>
+        </button>
+      </div>
+
+      <!-- Inspiration Chips -->
+      <div class="inspiration-row">
+        <span class="inspiration-label">Sugestões de temas:</span>
+        <div class="inspiration-chips">
+          @for (topic of inspirationTopics; track topic) {
+            <button
+              tuiChip
+              type="button"
+              size="s"
+              appearance="neutral"
+              class="inspiration-chip"
+              (click)="useTopic(topic)"
+              [disabled]="loading()"
+            >
+              {{ topic }}
+            </button>
+          }
+        </div>
       </div>
     </div>
-  </div>
+  } @else {
+    <div class="content-section">
+      <!-- Submode Selector -->
+      <div class="submode-selector-bar">
+        <button
+          tuiButton
+          type="button"
+          size="xs"
+          [appearance]="contentSubMode() === 'url' ? 'secondary' : 'flat'"
+          class="submode-btn"
+          (click)="setContentSubMode('url')"
+        >
+          <tui-icon icon="@tui.link" class="submode-icon" />
+          <span>Inserir Link</span>
+        </button>
+        <button
+          tuiButton
+          type="button"
+          size="xs"
+          [appearance]="contentSubMode() === 'text' ? 'secondary' : 'flat'"
+          class="submode-btn"
+          (click)="setContentSubMode('text')"
+        >
+          <tui-icon icon="@tui.align-left" class="submode-icon" />
+          <span>Colar Texto</span>
+        </button>
+      </div>
+
+      @if (contentSubMode() === 'url') {
+        <div class="content-input-section">
+          <label class="prompt-label" for="copilot-url-input">
+            <tui-icon icon="@tui.link" class="label-sparkle" />
+            URL da página ou notícia
+          </label>
+          <p class="content-help-text text-muted">
+            Insira o link de um artigo, notícia ou post. A IA lerá o conteúdo e identificará o debate central.
+          </p>
+
+          <div class="prompt-input-row">
+            <tui-textfield tuiTextfieldSize="m" class="prompt-input">
+              <input
+                id="copilot-url-input"
+                type="url"
+                placeholder="https://exemplo.com/artigo-ou-noticia"
+                [ngModel]="contentUrl()"
+                (ngModelChange)="contentUrl.set($event)"
+                (keydown.enter)="canGenerateFromContent() && generateFromContent()"
+                tuiTextfield
+              />
+            </tui-textfield>
+
+            <button
+              tuiButton
+              type="button"
+              size="m"
+              appearance="primary"
+              class="generate-btn"
+              [disabled]="!canGenerateFromContent()"
+              (click)="generateFromContent()"
+            >
+              <tui-icon icon="@tui.sparkles" class="btn-icon" />
+              <span class="btn-text">Extrair Enquete</span>
+            </button>
+          </div>
+          @if (contentUrl().trim().length > 0 && !isValidUrl()) {
+            <span class="validation-warning">Por favor, insira uma URL válida iniciando com http:// ou https://</span>
+          }
+        </div>
+      } @else {
+        <div class="content-input-section">
+          <label class="prompt-label" for="copilot-text-input">
+            <tui-icon icon="@tui.align-left" class="label-sparkle" />
+            Conteúdo ou texto bruto
+          </label>
+          <p class="content-help-text text-muted">
+            Cole notas de reunião, release notes, comunicados ou artigos (mínimo de 50 caracteres).
+          </p>
+
+          <div class="textarea-wrapper">
+            <textarea
+              id="copilot-text-input"
+              class="content-textarea"
+              rows="6"
+              placeholder="Cole aqui o texto completo ou os pontos principais para a IA identificar o dilema central..."
+              [ngModel]="contentText()"
+              (ngModelChange)="contentText.set($event)"
+            ></textarea>
+            <div class="textarea-footer">
+              <small class="char-counter" [class.valid-counter]="isValidText()">
+                {{ contentText().trim().length }} / 50 caracteres mínimos
+              </small>
+              <button
+                tuiButton
+                type="button"
+                size="m"
+                appearance="primary"
+                class="generate-btn"
+                [disabled]="!canGenerateFromContent()"
+                (click)="generateFromContent()"
+              >
+                <tui-icon icon="@tui.sparkles" class="btn-icon" />
+                <span class="btn-text">Extrair Enquete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
 
   <!-- Loading State -->
   @if (loading()) {
@@ -58,17 +194,19 @@
       <div class="loading-content">
         <tui-loader [showLoader]="true" [inheritColor]="false" size="m" class="loading-spinner" />
         <div class="loading-texts">
-          <span class="loading-title">Criando enquete balanceada...</span>
+          <span class="loading-title">
+            {{ mode() === 'content' ? 'Lendo conteúdo e analisando debate com IA...' : 'Criando enquete balanceada...' }}
+          </span>
           <span class="loading-sub text-muted">
-            Formulando pergunta neutra e opções mutuamente exclusivas e coletivamente exaustivas (MECE).
+            {{ mode() === 'content' ? 'Identificando o dilema central, formulando pergunta neutra e opções balanceadas.' : 'Formulando pergunta neutra e opções mutuamente exclusivas e coletivamente exaustivas (MECE).' }}
           </span>
         </div>
       </div>
     </div>
   }
 
-  <!-- Result Preview Card -->
-  @if (result(); as res) {
+  <!-- Result Preview Card (Quick Mode) -->
+  @if (mode() === 'quick' && result(); as res) {
     <div class="copilot-card result-card">
       <div class="card-header">
         <div class="header-title-box">

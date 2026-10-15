@@ -33,6 +33,12 @@ export interface GeneratePollResponse {
   options: string[];
 }
 
+export interface GeneratePollFromContentResponse {
+  title: string;
+  options: string[];
+  contextRationale: string;
+}
+
 export interface PollOptionDebateAnalysis {
   name: string;
   pros: string[];

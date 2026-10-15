@@ -21,6 +21,7 @@ import { RouterLink } from '@angular/router';
 import { UserApi } from '../../../auth/services/user-api';
 import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspector';
 import { PollCopilot } from '../poll-copilot/poll-copilot';
+import { GeneratePollFromContentResponse } from '../../../../shared/types/AiInspector';
 
 @Component({
   selector: 'app-new-poll',
@@ -138,6 +139,21 @@ export class NewPoll implements OnInit {
         label: 'Sucesso',
         appearance: 'positive',
       })
+      .subscribe();
+  }
+
+  public onApplyContentPoll(result: GeneratePollFromContentResponse): void {
+    this.pollTitle = result.title;
+    this.setOptionsList(result.options);
+    this.activeTabIndex = 0;
+    this.alerts
+      .open(
+        `Enquete gerada a partir do conteúdo! A IA identificou o seguinte dilema central: ${result.contextRationale}`,
+        {
+          label: 'Debate Central Identificado',
+          appearance: 'positive',
+        },
+      )
       .subscribe();
   }
 

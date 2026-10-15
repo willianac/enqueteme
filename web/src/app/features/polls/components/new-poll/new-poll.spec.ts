@@ -118,5 +118,23 @@ describe('NewPoll', () => {
     expect(component.getOptionsValues()).toContain('Go');
     expect(component.getOptionsValues()).toContain('Rust');
   });
+
+  it('applies poll generated from content and switches to manual tab', () => {
+    component.activeTabIndex = 1;
+    component.onApplyContentPoll({
+      title: 'Qual a prioridade no roadmap pós-reestruturação?',
+      options: ['Foco em estabilidade', 'Novas funcionalidades', 'Redução de custos'],
+      contextRationale: 'O artigo aborda o trade-off entre segurança financeira e crescimento.',
+    });
+
+    expect((component as any).pollTitle).toBe('Qual a prioridade no roadmap pós-reestruturação?');
+    expect(component.numberOfOptions).toBe(3);
+    expect(component.getOptionsValues()).toEqual([
+      'Foco em estabilidade',
+      'Novas funcionalidades',
+      'Redução de custos',
+    ]);
+    expect(component.activeTabIndex).toBe(0);
+  });
 });
 

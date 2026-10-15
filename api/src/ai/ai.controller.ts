@@ -7,6 +7,8 @@ import { GeneratePollDto } from './dto/generate-poll.dto';
 import { GeneratePollResponse } from './interfaces/generate-poll.interface';
 import { ExplainPollDebateDto } from './dto/explain-poll.dto';
 import { ExplainPollDebateResponse } from './interfaces/explain-poll.interface';
+import { GeneratePollFromContentDto } from './dto/generate-from-content.dto';
+import { GeneratePollFromContentResponse } from './interfaces/generate-from-content.interface';
 
 @Controller('ai')
 export class AiController {
@@ -39,5 +41,12 @@ export class AiController {
       body.options,
     );
   }
-}
 
+  @Post('generate-from-content')
+  @UseGuards(SessionGuard)
+  async generatePollFromContent(
+    @Body() body: GeneratePollFromContentDto,
+  ): Promise<GeneratePollFromContentResponse> {
+    return this.aiService.generatePollFromContent(body.type, body.content);
+  }
+}

@@ -3,7 +3,10 @@ import { TuiAlertService } from '@taiga-ui/core';
 import { of, throwError } from 'rxjs';
 import { PollApi } from '../../services/poll-api';
 import { PollCopilot } from './poll-copilot';
-import { GeneratePollResponse } from '../../../../shared/types/AiInspector';
+import {
+  GeneratePollFromContentResponse,
+  GeneratePollResponse,
+} from '../../../../shared/types/AiInspector';
 
 describe('PollCopilot', () => {
   let component: PollCopilot;
@@ -20,8 +23,15 @@ describe('PollCopilot', () => {
     ],
   };
 
+  const mockContentResponse: GeneratePollFromContentResponse = {
+    title: 'Qual a prioridade no roadmap pós-reestruturação?',
+    options: ['Foco em estabilidade', 'Novas funcionalidades', 'Redução de custos'],
+    contextRationale: 'O artigo aborda o trade-off entre segurança financeira e crescimento acelerado.',
+  };
+
   const pollApiMock = {
     generatePoll: vi.fn().mockReturnValue(of(mockResponse)),
+    generatePollFromContent: vi.fn().mockReturnValue(of(mockContentResponse)),
   };
 
   const alertServiceMock = {
@@ -30,6 +40,7 @@ describe('PollCopilot', () => {
 
   beforeEach(async () => {
     pollApiMock.generatePoll.mockClear();
+    pollApiMock.generatePollFromContent.mockClear();
     alertServiceMock.open.mockClear();
 
     await TestBed.configureTestingModule({
@@ -47,18 +58,119 @@ describe('PollCopilot', () => {
 
   it('creates the component', () => {
     expect(component).toBeTruthy();
+    expect(component.mode()).toBe('quick');
+    expect(component.contentSubMode()).toBe('url');
   });
 
-  it('disables generate button when prompt is empty or too short', () => {
+  it('switches modes between quick and content, and submodes between url and text', () => {
+    component.setMode('content');
+    expect(component.mode()).toBe('content');
+
+    component.setContentSubMode('text');
+    expect(component.contentSubMode()).toBe('text');
+
+    component.setContentSubMode('url');
+    expect(component.contentSubMode()).toBe('url');
+
+    component.setMode('quick');
+    expect(component.mode()).toBe('quick');
+  });
+
+  it('disables generate button when prompt is empty or too short in quick mode', () => {
     component.prompt.set('ab');
     fixture.detectChanges();
     expect(component.canGenerate()).toBe(false);
   });
 
-  it('enables generate button when prompt has at least 3 characters', () => {
+  it('enables generate button when prompt has at least 3 characters in quick mode', () => {
     component.prompt.set('Bancos para analytics');
     fixture.detectChanges();
     expect(component.canGenerate()).toBe(true);
+  });
+
+  it('validates URL correctly in content url mode', () => {
+    component.setMode('content');
+    component.setContentSubMode('url');
+
+    component.contentUrl.set('invalid-url');
+    expect(component.isValidUrl()).toBe(false);
+    expect(component.canGenerateFromContent()).toBe(false);
+
+    component.contentUrl.set('ftp://example.com/file');
+    expect(component.isValidUrl()).toBe(false);
+    expect(component.canGenerateFromContent()).toBe(false);
+
+    component.contentUrl.set('https://techblog.example.com/article/123');
+    expect(component.isValidUrl()).toBe(true);
+    expect(component.canGenerateFromContent()).toBe(true);
+  });
+
+  it('validates text length correctly in content text mode (minimum 50 chars)', () => {
+    component.setMode('content');
+    component.setContentSubMode('text');
+
+    component.contentText.set('Texto muito curto.');
+    expect(component.isValidText()).toBe(false);
+    expect(component.canGenerateFromContent()).toBe(false);
+
+    component.contentText.set(
+      'Este é um texto longo o suficiente com mais de 50 caracteres para ser analisado pela IA com sucesso.',
+    );
+    expect(component.isValidText()).toBe(true);
+    expect(component.canGenerateFromContent()).toBe(true);
+  });
+
+  it('calls generatePollFromContent with URL and emits applyContentPoll', () => {
+    component.setMode('content');
+    component.setContentSubMode('url');
+    component.contentUrl.set('https://exemplo.com/artigo-reestruturacao');
+
+    const emitSpy = vi.spyOn(component.applyContentPoll, 'emit');
+
+    component.generateFromContent();
+
+    expect(pollApiMock.generatePollFromContent).toHaveBeenCalledWith(
+      'url',
+      'https://exemplo.com/artigo-reestruturacao',
+    );
+    expect(component.loading()).toBe(false);
+    expect(emitSpy).toHaveBeenCalledWith(mockContentResponse);
+  });
+
+  it('calls generatePollFromContent with text and emits applyContentPoll', () => {
+    component.setMode('content');
+    component.setContentSubMode('text');
+    const validText =
+      'Reunião sobre corte de custos versus investimento em novas features para o próximo trimestre.';
+    component.contentText.set(validText);
+
+    const emitSpy = vi.spyOn(component.applyContentPoll, 'emit');
+
+    component.generateFromContent();
+
+    expect(pollApiMock.generatePollFromContent).toHaveBeenCalledWith('text', validText);
+    expect(component.loading()).toBe(false);
+    expect(emitSpy).toHaveBeenCalledWith(mockContentResponse);
+  });
+
+  it('handles URL generation errors with contextual contingency message', () => {
+    pollApiMock.generatePollFromContent.mockReturnValueOnce(
+      throwError(() => new Error('SSRF or Blocked')),
+    );
+    component.setMode('content');
+    component.setContentSubMode('url');
+    component.contentUrl.set('https://exemplo.com/bloqueado');
+
+    component.generateFromContent();
+
+    expect(component.loading()).toBe(false);
+    expect(alertServiceMock.open).toHaveBeenCalledWith(
+      "Não foi possível ler a página. Se o site exigir login ou bloquear leitura, copie e cole o texto na aba 'Colar Texto'.",
+      expect.objectContaining({
+        label: 'Erro ao processar URL',
+        appearance: 'negative',
+      }),
+    );
   });
 
   it('uses inspiration topic and generates', () => {
@@ -67,7 +179,7 @@ describe('PollCopilot', () => {
     expect(pollApiMock.generatePoll).toHaveBeenCalled();
   });
 
-  it('calls pollApi and sets generated result and title', () => {
+  it('calls pollApi and sets generated result and title in quick mode', () => {
     component.prompt.set('Analytics em tempo real');
     component.generate();
 
@@ -98,7 +210,7 @@ describe('PollCopilot', () => {
     expect(alertServiceMock.open).toHaveBeenCalled();
   });
 
-  it('emits applyPoll when user applies generated poll', () => {
+  it('emits applyPoll when user applies generated poll in quick mode', () => {
     const emitSpy = vi.spyOn(component.applyPoll, 'emit');
     component.result.set(mockResponse);
     component.customTitle.set('Título customizado pelo usuário?');
@@ -113,7 +225,7 @@ describe('PollCopilot', () => {
     });
   });
 
-  it('handles API errors gracefully and notifies user', () => {
+  it('handles API errors gracefully and notifies user in quick mode', () => {
     pollApiMock.generatePoll.mockReturnValueOnce(
       throwError(() => new Error('AI Service Unavailable')),
     );

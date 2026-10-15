@@ -4,6 +4,7 @@ import { PollType } from '../../../shared/types/Poll';
 import {
   ExplainPollDebateRequest,
   ExplainPollDebateResponse,
+  GeneratePollFromContentResponse,
   GeneratePollRequest,
   GeneratePollResponse,
   InspectPollBiasResponse,
@@ -95,6 +96,16 @@ export class PollApi {
 
   public generatePoll(request: GeneratePollRequest): Observable<GeneratePollResponse> {
     return this.http.post<GeneratePollResponse>(`${this.apiUrl}ai/generate-poll`, request);
+  }
+
+  public generatePollFromContent(
+    type: 'url' | 'text',
+    content: string,
+  ): Observable<GeneratePollFromContentResponse> {
+    return this.http.post<GeneratePollFromContentResponse>(
+      `${this.apiUrl}ai/generate-from-content`,
+      { type, content },
+    );
   }
 
   public explainPollDebate(

@@ -26,6 +26,31 @@ export class OpenRouter {
         });
       }
 
+      if (
+        systemMessage.includes('análise de conteúdo') ||
+        systemMessage.includes('dilema central') ||
+        systemMessage.includes('contextRationale')
+      ) {
+        return Promise.resolve({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  title: 'Qual arquitetura adotar para a nova release?',
+                  options: [
+                    'Monólito Modular',
+                    'Microsserviços Distribuídos',
+                    'Serverless / Edge',
+                  ],
+                  contextRationale:
+                    'O conteúdo debate os trade-offs entre simplicidade operacional do monólito versus independência dos microsserviços.',
+                }),
+              },
+            },
+          ],
+        });
+      }
+
       if (systemMessage.includes('contexto do debate') || systemMessage.includes('explicar para um participante')) {
         return Promise.resolve({
           choices: [
