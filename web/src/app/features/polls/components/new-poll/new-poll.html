@@ -46,9 +46,40 @@
                   id="poll-title-input"
                   placeholder="Ex: Qual deve ser a prioridade da próxima release?"
                   [(ngModel)]="pollTitle"
+                  (ngModelChange)="onTitleChange($event)"
                   tuiTextfield
                 />
               </tui-textfield>
+
+              @if (duplicateMatch() && !dismissedDuplicate()) {
+                <div class="duplicate-warning-banner" role="alert">
+                  <div class="duplicate-warning-content">
+                    <tui-icon icon="@tui.triangle-alert" class="warning-icon" />
+                    <div class="duplicate-warning-text">
+                      <span>Uma enquete similar está ativa com {{ duplicateMatch()?.votesCount }} votos: '<strong>{{ duplicateMatch()?.title }}</strong>'</span>
+                      <a
+                        [routerLink]="['/polls', duplicateMatch()?.id]"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="view-duplicate-link"
+                      >
+                        Ver enquete
+                      </a>
+                    </div>
+                  </div>
+                  <button
+                    tuiIconButton
+                    tuiButtonClose
+                    type="button"
+                    size="xs"
+                    (click)="dismissDuplicate()"
+                    title="Fechar aviso de duplicidade"
+                    class="duplicate-close-btn"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              }
             </div>
 
             <div class="add-options">

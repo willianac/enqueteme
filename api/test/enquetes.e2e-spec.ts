@@ -158,7 +158,7 @@ describe('Enquetes API', () => {
           voteRequireLogin: false,
           options: [
             { id: 20, name: 'NestJS', votes: 0 },
-            { id: 21, name: 'Angular', votes: 0 },
+            { id: 21, name: 'Spring', votes: 1 },
           ],
           hasVoted: false,
           votedOptionId: null,
@@ -663,6 +663,68 @@ describe('Enquetes API', () => {
         .send({ title: '', options: ['A'] })
         .set('Cookie', 'enqueteme_session=valid-token')
         .expect(400);
+    });
+  });
+
+  describe('GET /polls/check-duplicate', () => {
+    it('returns 400 when title is shorter than 3 characters', async () => {
+      await request(app.getHttpServer())
+        .get('/polls/check-duplicate?title=ab')
+        .expect(400);
+    });
+
+    it('returns duplicateFound: false when no duplicate is in cache', async () => {
+      await request(app.getHttpServer())
+        .get('/polls/check-duplicate?title=Totalmente%20Inedita%202026')
+        .expect(200)
+        .expect({
+          duplicateFound: false,
+          similarity: 0,
+          poll: null,
+        });
+    });
+
+    it('returns duplicateFound: true when similar poll exists', async () => {
+      prisma.enquete.create.mockResolvedValue(enquete);
+
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Melhor framework?',
+          options: ['NestJS', 'Spring'],
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .get('/polls/check-duplicate?title=Qual%20o%20melhor%20framework?')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body.duplicateFound).toBe(true);
+          expect(response.body.similarity).toBeGreaterThanOrEqual(0.6);
+          expect(response.body.poll).toEqual({
+            id: 10,
+            title: 'Melhor framework?',
+            votesCount: 0,
+          });
+        });
+    });
+
+    it('supports comma-separated options query parameter', async () => {
+      await request(app.getHttpServer())
+        .get('/polls/check-duplicate?title=Melhor%20framework?&options=NestJS,Spring')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body.duplicateFound).toBe(true);
+          expect(response.body.similarity).toBe(1);
+          expect(response.body.poll.id).toBe(10);
+        });
+    });
+
+    it('is not intercepted by GET /polls/:id', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/polls/check-duplicate?title=Valid%20Title');
+      expect(response.status).toBe(200);
     });
   });
 });

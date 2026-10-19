@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { PollType } from '../../../shared/types/Poll';
 import {
@@ -11,6 +11,16 @@ import {
 } from '../../../shared/types/AiInspector';
 import { Observable } from 'rxjs';
 
+export interface DuplicatePollCheckResult {
+  duplicateFound: boolean;
+  similarity: number;
+  poll: {
+    id: number;
+    title: string;
+    votesCount: number;
+  } | null;
+}
+
 type CreatePollResponse = {
   pollId: string;
   title: string;
@@ -18,26 +28,26 @@ type CreatePollResponse = {
   createdAt: string;
   updatedAt: string;
   userId: string;
-}
+};
 
 type CreatePollRequest = {
   title: string;
   options: string[];
   voteRequireLogin?: boolean;
   durationDays?: number;
-}
+};
 
 type SetVoteRequest = {
   pollId: number;
   optionId: number;
-}
+};
 
 export type UpdatePollRequest = {
   title: string;
   options: string[];
   voteRequireLogin?: boolean;
   pollExpirationInDays?: number;
-}
+};
 
 @Injectable({
   providedIn: 'root',
@@ -48,8 +58,8 @@ export class PollApi {
   private apiUrl = '/api/';
 
   public createPoll(createPollRequest: CreatePollRequest) {
-    return this.http.post<CreatePollResponse>(`${this.apiUrl}polls`, { 
-      title: createPollRequest.title, 
+    return this.http.post<CreatePollResponse>(`${this.apiUrl}polls`, {
+      title: createPollRequest.title,
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
       pollExpirationInDays: createPollRequest.durationDays,
@@ -68,7 +78,7 @@ export class PollApi {
     return this.http.post<PollType>(`${this.apiUrl}polls/vote`, {
       pollId: setVoteRequest.pollId,
       optionId: setVoteRequest.optionId,
-    })
+    });
   }
 
   public getMyPolls(): Observable<PollType[]> {
@@ -85,6 +95,20 @@ export class PollApi {
 
   public deletePoll(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}polls/${id}`);
+  }
+
+  public checkDuplicate(
+    title: string,
+    options?: string[],
+  ): Observable<DuplicatePollCheckResult> {
+    let params = new HttpParams().set('title', title);
+    const validOptions = (options || []).filter((opt) => opt && opt.trim().length > 0);
+    if (validOptions.length > 0) {
+      params = params.set('options', validOptions.join(','));
+    }
+    return this.http.get<DuplicatePollCheckResult>(`${this.apiUrl}polls/check-duplicate`, {
+      params,
+    });
   }
 
   public inspectPollBias(request: {
@@ -117,4 +141,3 @@ export class PollApi {
     );
   }
 }
-

@@ -26,6 +26,13 @@ describe('NewPoll', () => {
           provide: PollApi,
           useValue: {
             createPoll: vi.fn(),
+            checkDuplicate: vi.fn().mockReturnValue(
+              of({
+                duplicateFound: false,
+                similarity: 0,
+                poll: null,
+              }),
+            ),
             inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
             generatePoll: vi.fn().mockReturnValue(
               of({
@@ -136,5 +143,103 @@ describe('NewPoll', () => {
     ]);
     expect(component.activeTabIndex).toBe(0);
   });
-});
 
+  it('does not trigger duplicate check if title length is less than 5 characters', () => {
+    vi.useFakeTimers();
+    try {
+      const pollApi = TestBed.inject(PollApi);
+      component.pollTitle = 'Test';
+      vi.advanceTimersByTime(500);
+
+      expect(pollApi.checkDuplicate).not.toHaveBeenCalled();
+      expect(component.duplicateMatch()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('triggers debounced duplicate check when title length is >= 5 characters', () => {
+    vi.useFakeTimers();
+    try {
+      const pollApi = TestBed.inject(PollApi);
+      component.pollTitle = 'React';
+      vi.advanceTimersByTime(200);
+      expect(pollApi.checkDuplicate).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(200);
+      expect(pollApi.checkDuplicate).toHaveBeenCalledWith('React', undefined);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('passes draft options to duplicate check when at least 2 options are filled', () => {
+    vi.useFakeTimers();
+    try {
+      const pollApi = TestBed.inject(PollApi);
+      (component as any).newPollForm.patchValue({
+        option1: 'Opção A',
+        option2: 'Opção B',
+      });
+
+      component.pollTitle = 'Nova enquete sobre algo';
+      vi.advanceTimersByTime(400);
+
+      expect(pollApi.checkDuplicate).toHaveBeenCalledWith('Nova enquete sobre algo', [
+        'Opção A',
+        'Opção B',
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('displays warning banner when duplicate match is found with title, votes count and link', () => {
+    component.duplicateMatch.set({
+      id: 99,
+      title: 'Qual o melhor framework em 2026?',
+      votesCount: 42,
+    });
+    fixture.detectChanges();
+
+    const banner: HTMLElement | null = fixture.nativeElement.querySelector(
+      '.duplicate-warning-banner',
+    );
+    expect(banner).not.toBeNull();
+    expect(banner?.textContent).toContain('Uma enquete similar está ativa com 42 votos');
+    expect(banner?.textContent).toContain('Qual o melhor framework em 2026?');
+
+    const link: HTMLAnchorElement | null = banner?.querySelector('a') ?? null;
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toContain('/polls/99');
+    expect(link?.getAttribute('target')).toBe('_blank');
+  });
+
+  it('dismisses duplicate warning banner when close button is clicked', () => {
+    component.duplicateMatch.set({
+      id: 99,
+      title: 'Qual o melhor framework em 2026?',
+      votesCount: 42,
+    });
+    fixture.detectChanges();
+
+    const closeBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+      '.duplicate-close-btn',
+    );
+    expect(closeBtn).not.toBeNull();
+    closeBtn?.click();
+    fixture.detectChanges();
+
+    expect(component.dismissedDuplicate()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.duplicate-warning-banner')).toBeNull();
+  });
+
+  it('resets dismissedDuplicate when user changes the title', () => {
+    component.pollTitle = 'Título Original';
+    component.dismissDuplicate();
+    expect(component.dismissedDuplicate()).toBe(true);
+
+    component.pollTitle = 'Título Diferente';
+    expect(component.dismissedDuplicate()).toBe(false);
+  });
+});

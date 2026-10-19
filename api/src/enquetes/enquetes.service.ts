@@ -13,6 +13,7 @@ import { toSafeNumber } from '../prisma/to-safe-number';
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
 import { UpdateEnqueteDto } from './update-enquete.dto';
+import { EnquetesSimilarityService } from './enquetes-similarity.service';
 
 type EnqueteCompleta = Prisma.EnqueteGetPayload<{
   include: { usuario: true; opcoes: true };
@@ -20,7 +21,10 @@ type EnqueteCompleta = Prisma.EnqueteGetPayload<{
 
 @Injectable()
 export class EnquetesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly similarityService: EnquetesSimilarityService,
+  ) {}
 
   async findAll(usuario: AuthenticatedUser | null, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
@@ -91,12 +95,15 @@ export class EnquetesService {
       include: { usuario: true, opcoes: true },
     });
 
+    this.similarityService.removePoll(id);
+
     return this.toResponse(updated);
   }
 
   async remove(id: number, usuario: AuthenticatedUser) {
     const enquete = await this.assertOwnedPoll(id, usuario.id);
     await this.prisma.enquete.delete({ where: { id: enquete.id } });
+    this.similarityService.removePoll(id);
   }
 
   async update(id: number, usuario: AuthenticatedUser, body: UpdateEnqueteDto) {
@@ -133,7 +140,7 @@ export class EnquetesService {
       updateData.expirationDate = expirationDate;
     }
 
-    return this.prisma.$transaction(async (transaction) => {
+    const result = await this.prisma.$transaction(async (transaction) => {
       await transaction.opcao.deleteMany({
         where: { enqueteId: enquete.id },
       });
@@ -151,6 +158,15 @@ export class EnquetesService {
 
       return this.toResponse(updated);
     });
+
+    this.similarityService.upsertPoll({
+      id: result.id,
+      title: result.title,
+      options: body.options,
+      votesCount: 0,
+    });
+
+    return result;
   }
 
   private async assertOwnedPoll(id: number, userId: number) {
@@ -192,8 +208,16 @@ export class EnquetesService {
       include: { usuario: true, opcoes: true },
     });
 
+    const pollId = toSafeNumber(enquete.id);
+    this.similarityService.upsertPoll({
+      id: pollId,
+      title: enquete.title,
+      options: body.options,
+      votesCount: 0,
+    });
+
     return {
-      id: toSafeNumber(enquete.id),
+      id: pollId,
       title: enquete.title,
       createdAt: enquete.createdAt,
       updatedAt: enquete.updatedAt,
@@ -262,6 +286,8 @@ export class EnquetesService {
         where: { id: pollId },
         include: { usuario: true, opcoes: true },
       });
+
+      this.similarityService.incrementVotesCount(toSafeNumber(pollId));
 
       return this.toResponse(result);
     });

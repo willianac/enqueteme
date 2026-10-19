@@ -22,12 +22,15 @@ import {
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
 import { EnquetesService } from './enquetes.service';
+import { EnquetesSimilarityService } from './enquetes-similarity.service';
+import { CheckDuplicateQueryDto } from './check-duplicate-query.dto';
 import { UpdateEnqueteDto } from './update-enquete.dto';
 
 @Controller('polls')
 export class EnquetesController {
   constructor(
     private readonly enquetesService: EnquetesService,
+    private readonly similarityService: EnquetesSimilarityService,
     private readonly auth: AuthService,
   ) {}
 
@@ -66,6 +69,11 @@ export class EnquetesController {
   @UseGuards(SessionGuard)
   findMine(@Req() request: AuthenticatedRequest) {
     return this.enquetesService.findMine(request.user);
+  }
+
+  @Get('check-duplicate')
+  checkDuplicate(@Query() query: CheckDuplicateQueryDto) {
+    return this.similarityService.checkDuplicate(query.title, query.options);
   }
 
   @Get(':id')
