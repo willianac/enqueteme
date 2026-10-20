@@ -12,9 +12,9 @@ export function pollTotalVotes(options: PollType['options']): number {
   return options.reduce((acc, opt) => acc + opt.votes, 0);
 }
 
-export function pollVotePercentage(votes: number, totalVotes: number): number {
-  if (totalVotes === 0) return 0;
-  return Math.round((votes / totalVotes) * 100);
+export function pollVotePercentage(optionVotes: number, totalVoters: number): number {
+  if (totalVoters <= 0) return 0;
+  return Math.round((optionVotes / totalVoters) * 100);
 }
 
 export function pollProgressColor(isChosenOrIndex: boolean | number = false): string {

@@ -22,6 +22,8 @@ describe('EditPoll', () => {
     creatorName: 'Will',
     expirationDate: '2099-12-31T23:59:59.000Z',
     voteRequireLogin: true,
+    allowMultiple: true,
+    maxChoices: 2,
     options: [
       { id: 1, name: 'Opção A', votes: 0 },
       { id: 2, name: 'Opção B', votes: 0 },
@@ -62,7 +64,7 @@ describe('EditPoll', () => {
     return f;
   }
 
-  it('pre-fills the form from the loaded poll', async () => {
+  it('pre-fills the form from the loaded poll including allowMultiple and maxChoices', async () => {
     fixture = createWithParam('10');
     await fixture.whenStable();
     fixture.detectChanges();
@@ -71,6 +73,8 @@ describe('EditPoll', () => {
     expect(component.editForm.get('title')?.value).toBe('Enquete original');
     expect(component.options.length).toBe(2);
     expect(component.editForm.get('voteRequireLogin')?.value).toBe(true);
+    expect(component.editForm.get('allowMultiple')?.value).toBe(true);
+    expect(component.editForm.get('maxChoices')?.value).toBe(2);
   });
 
   it('validates that at least 2 options are required', async () => {
@@ -86,6 +90,21 @@ describe('EditPoll', () => {
     component.onSubmit();
 
     expect(component.errorMessage()?.message).toContain('pelo menos 2 opções');
+    expect(pollApi.updatePoll).not.toHaveBeenCalled();
+  });
+
+  it('validates that maxChoices does not exceed options length', async () => {
+    fixture = createWithParam('10');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    component.editForm.get('title')?.setValue('Novo título');
+    component.editForm.get('allowMultiple')?.setValue(true);
+    component.editForm.get('maxChoices')?.setValue(5); // Only 2 options exist
+    component.onSubmit();
+
+    expect(component.errorMessage()?.message).toContain('O limite de escolhas deve estar entre 2 e 2');
     expect(pollApi.updatePoll).not.toHaveBeenCalled();
   });
 
@@ -106,7 +125,7 @@ describe('EditPoll', () => {
     expect(component.errorMessage()?.message).toContain('já possui votos');
   });
 
-  it('navigates back on successful submit', async () => {
+  it('navigates back on successful submit with allowMultiple and maxChoices', async () => {
     fixture = createWithParam('10');
     await fixture.whenStable();
     fixture.detectChanges();
@@ -118,6 +137,14 @@ describe('EditPoll', () => {
     component.onSubmit();
     await fixture.whenStable();
 
+    expect(pollApi.updatePoll).toHaveBeenCalledWith(
+      10,
+      expect.objectContaining({
+        title: 'Novo título',
+        allowMultiple: true,
+        maxChoices: 2,
+      }),
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/my-polls']);
   });
 });

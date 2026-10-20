@@ -39,9 +39,9 @@ describe('PollApi', () => {
     });
     create.flush({});
 
-    service.setVote({ pollId: 1, optionId: 2 }).subscribe();
+    service.setVote({ pollId: 1, optionIds: [2] }).subscribe();
     const vote = http.expectOne('/api/polls/vote');
-    expect(vote.request.body).toEqual({ pollId: 1, optionId: 2 });
+    expect(vote.request.body).toEqual({ pollId: 1, optionIds: [2] });
     vote.flush({});
   });
 

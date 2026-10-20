@@ -6,6 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { AuthenticatedUser } from '../auth/auth.service';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -97,7 +98,7 @@ export class EnquetesService {
 
     this.similarityService.removePoll(id);
 
-    return this.toResponse(updated);
+    return this.toResponse(updated as EnqueteCompleta);
   }
 
   async remove(id: number, usuario: AuthenticatedUser) {
@@ -117,12 +118,45 @@ export class EnquetesService {
       throw new ConflictException('Poll already has votes and cannot be edited.');
     }
 
+    const allowMultiple =
+      body.allowMultiple !== undefined
+        ? body.allowMultiple
+        : enquete.allowMultiple;
+    let maxChoices: number | null | undefined;
+    if (body.maxChoices !== undefined) {
+      maxChoices = body.maxChoices;
+    } else {
+      maxChoices = enquete.maxChoices;
+    }
+
+    if (maxChoices !== null && maxChoices !== undefined) {
+      if (!allowMultiple) {
+        throw new BadRequestException(
+          'maxChoices can only be set when allowMultiple is true.',
+        );
+      }
+      if (maxChoices > body.options.length) {
+        throw new BadRequestException(
+          'maxChoices cannot exceed the number of options.',
+        );
+      }
+      if (maxChoices < 2) {
+        throw new BadRequestException('maxChoices must be at least 2.');
+      }
+    }
+
+    if (!allowMultiple) {
+      maxChoices = null;
+    }
+
     const now = new Date();
     const updateData: {
       title: string;
       updatedAt: Date;
       voteRequireLogin?: boolean;
       expirationDate?: Date;
+      allowMultiple?: boolean;
+      maxChoices?: number | null;
     } = {
       title: body.title,
       updatedAt: now,
@@ -138,6 +172,11 @@ export class EnquetesService {
         expirationDate.getUTCDate() + body.pollExpirationInDays,
       );
       updateData.expirationDate = expirationDate;
+    }
+
+    if (body.allowMultiple !== undefined || body.maxChoices !== undefined) {
+      updateData.allowMultiple = allowMultiple;
+      updateData.maxChoices = maxChoices;
     }
 
     const result = await this.prisma.$transaction(async (transaction) => {
@@ -156,7 +195,7 @@ export class EnquetesService {
         include: { usuario: true, opcoes: true },
       });
 
-      return this.toResponse(updated);
+      return this.toResponse(updated as EnqueteCompleta);
     });
 
     this.similarityService.upsertPoll({
@@ -187,6 +226,22 @@ export class EnquetesService {
   }
 
   async create(body: CreateEnqueteDto, usuario: AuthenticatedUser) {
+    if (body.maxChoices !== undefined && body.maxChoices !== null) {
+      if (!body.allowMultiple) {
+        throw new BadRequestException(
+          'maxChoices can only be set when allowMultiple is true.',
+        );
+      }
+      if (body.maxChoices > body.options.length) {
+        throw new BadRequestException(
+          'maxChoices cannot exceed the number of options.',
+        );
+      }
+      if (body.maxChoices < 2) {
+        throw new BadRequestException('maxChoices must be at least 2.');
+      }
+    }
+
     const now = new Date();
     const expirationDate = new Date(now);
     expirationDate.setUTCDate(
@@ -199,6 +254,9 @@ export class EnquetesService {
         createdAt: now,
         updatedAt: now,
         voteRequireLogin: body.voteRequireLogin ?? false,
+        allowMultiple: body.allowMultiple ?? false,
+        maxChoices: body.allowMultiple ? (body.maxChoices ?? null) : null,
+        totalVoters: 0n,
         expirationDate,
         usuario: { connect: { id: BigInt(usuario.id) } },
         opcoes: {
@@ -222,19 +280,45 @@ export class EnquetesService {
       createdAt: enquete.createdAt,
       updatedAt: enquete.updatedAt,
       voteRequireLogin: enquete.voteRequireLogin,
+      allowMultiple: enquete.allowMultiple,
+      maxChoices: enquete.maxChoices,
+      totalVoters: toSafeNumber(enquete.totalVoters),
       expirationDate: enquete.expirationDate,
       user: {
         id: usuario.id,
         name: usuario.name,
       },
-      options: this.options(enquete),
+      options: this.options(enquete as EnqueteCompleta),
     };
   }
 
   async vote(body: CreateVotoDto, usuario: AuthenticatedUser | null) {
+    const uniqueOptionIds = new Set(body.optionIds);
+    if (uniqueOptionIds.size !== body.optionIds.length) {
+      throw new BadRequestException('Duplicate option IDs are not allowed.');
+    }
+
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await this.executeVoteTransaction(body, usuario);
+      } catch (error: any) {
+        if (error?.code === 'P2034' && attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 20 * attempt));
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
+  private async executeVoteTransaction(
+    body: CreateVotoDto,
+    usuario: AuthenticatedUser | null,
+  ) {
     return this.prisma.$transaction(async (transaction) => {
       const pollId = BigInt(body.pollId);
-      const optionId = BigInt(body.optionId);
+      const optionIds = body.optionIds.map((id) => BigInt(id));
       const enquete = await transaction.enquete.findUnique({
         where: { id: pollId },
         include: { usuario: true, opcoes: true },
@@ -252,44 +336,80 @@ export class EnquetesService {
         throw new UnauthorizedException();
       }
 
-      const optionBelongsToPoll = enquete.opcoes.some(
-        (opcao) => opcao.id === optionId,
-      );
-      if (!optionBelongsToPoll) {
-        throw new BadRequestException('Option not found in poll.');
+      if (!enquete.allowMultiple && body.optionIds.length > 1) {
+        throw new BadRequestException(
+          'This poll does not allow multiple choices.',
+        );
       }
 
-      try {
-        await transaction.voto.create({
-          data: {
-            enqueteId: pollId,
-            opcaoId: optionId,
-            usuarioId: usuario ? BigInt(usuario.id) : null,
-          },
+      if (
+        enquete.allowMultiple &&
+        enquete.maxChoices &&
+        body.optionIds.length > enquete.maxChoices
+      ) {
+        throw new BadRequestException(
+          `You cannot select more than ${enquete.maxChoices} options.`,
+        );
+      }
+
+      const pollOptionIdSet = new Set(enquete.opcoes.map((opt) => opt.id));
+      const allBelong = optionIds.every((optId) => pollOptionIdSet.has(optId));
+      if (!allBelong) {
+        throw new BadRequestException('One or more options not found in poll.');
+      }
+
+      if (usuario) {
+        const existingVoteCount = await transaction.voto.count({
+          where: { enqueteId: pollId, usuarioId: BigInt(usuario.id) },
         });
-      } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        ) {
+        if (existingVoteCount > 0) {
           throw new ConflictException('User has already voted on this poll.');
         }
-        throw error;
       }
 
+      await transaction.enquete.update({
+        where: { id: pollId },
+        data: { totalVoters: { increment: 1 } },
+      });
+
+      const sortedOptionIds = [...optionIds].sort((a, b) =>
+        a < b ? -1 : a > b ? 1 : 0,
+      );
       await transaction.opcao.updateMany({
-        where: { id: optionId, enqueteId: pollId },
+        where: { id: { in: sortedOptionIds }, enqueteId: pollId },
         data: { votes: { increment: 1 } },
+      });
+
+      const ballotId = randomUUID();
+      await transaction.voto.createMany({
+        data: optionIds.map((optId) => ({
+          ballotId,
+          enqueteId: pollId,
+          opcaoId: optId,
+          usuarioId: usuario ? BigInt(usuario.id) : null,
+        })),
       });
 
       const result = await transaction.enquete.findUniqueOrThrow({
         where: { id: pollId },
-        include: { usuario: true, opcoes: true },
+        include: {
+          usuario: true,
+          opcoes: true,
+          votos: usuario
+            ? {
+                where: { usuarioId: BigInt(usuario.id) },
+                select: { opcaoId: true },
+              }
+            : false,
+        },
       });
 
-      this.similarityService.incrementVotesCount(toSafeNumber(pollId));
+      this.similarityService.incrementVotesCount(
+        toSafeNumber(pollId),
+        body.optionIds.length,
+      );
 
-      return this.toResponse(result);
+      return this.toResponse(result as EnqueteCompleta);
     });
   }
 
@@ -300,8 +420,13 @@ export class EnquetesService {
       creatorName: enquete.usuario.name,
       expirationDate: enquete.expirationDate,
       voteRequireLogin: enquete.voteRequireLogin,
+      allowMultiple: enquete.allowMultiple,
+      maxChoices: enquete.maxChoices,
+      totalVoters: toSafeNumber(enquete.totalVoters),
       options: this.options(enquete),
       hasVoted: Boolean(enquete.votos?.length),
+      votedOptionIds:
+        enquete.votos?.map((v) => toSafeNumber(v.opcaoId)) ?? [],
       votedOptionId: enquete.votos?.[0]
         ? toSafeNumber(enquete.votos[0].opcaoId)
         : null,

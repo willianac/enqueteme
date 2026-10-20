@@ -56,6 +56,24 @@
             </tui-textfield>
           </div>
 
+          <div class="settings-row">
+            <label tuiLabel class="switch-label">
+              Permitir múltipla escolha
+              <input tuiSwitch type="checkbox" formControlName="allowMultiple" />
+            </label>
+            @if (editForm.get('allowMultiple')?.value) {
+              <tui-textfield tuiTextfieldSize="m" class="duration-input">
+                <input
+                  tuiTextfield
+                  type="number"
+                  formControlName="maxChoices"
+                  min="2"
+                  placeholder="Limite de escolhas (opcional)"
+                />
+              </tui-textfield>
+            }
+          </div>
+
           <tui-error [error]="errorMessage()" />
 
           <footer>

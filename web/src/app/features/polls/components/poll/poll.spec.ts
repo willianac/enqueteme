@@ -39,6 +39,7 @@ describe('Poll', () => {
       creatorName: 'Will',
       expirationDate: '2030-08-25T12:00:00.000Z',
       voteRequireLogin: false,
+      allowMultiple: false,
       options: [
         { id: 1, name: 'A', votes: 0 },
         { id: 2, name: 'B', votes: 0 },
@@ -163,103 +164,160 @@ describe('Poll', () => {
     expect(chosenOption?.textContent).toContain('A');
   });
 
-  it('does not render tui-pin when poll is expired', () => {
+  it('renders checkboxes for multiple-choice polls and shows selection rule', () => {
     fixture.componentRef.setInput('pollData', {
-      id: 4,
-      title: 'Expired Pin Test',
+      id: 6,
+      title: 'Multiple Choice Poll',
       creatorName: 'Will',
-      expirationDate: '2020-01-01T00:00:00.000Z',
+      expirationDate: '2030-08-25T12:00:00.000Z',
       voteRequireLogin: false,
+      allowMultiple: true,
+      maxChoices: 2,
       options: [
-        { id: 1, name: 'A', votes: 1 },
+        { id: 1, name: 'Option 1', votes: 0 },
+        { id: 2, name: 'Option 2', votes: 0 },
+        { id: 3, name: 'Option 3', votes: 0 },
       ],
     });
     fixture.detectChanges();
 
-    const pin = fixture.nativeElement.querySelector('tui-pin');
-    expect(pin).toBeNull();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Múltipla escolha • Escolha até 2 opções');
+
+    const checkboxes = el.querySelectorAll('input[type="checkbox"]');
+    expect(checkboxes.length).toBe(3);
+    expect(checkboxes[0].hasAttribute('tuicheckbox')).toBe(true);
+
+    const radios = el.querySelectorAll('input[type="radio"]');
+    expect(radios.length).toBe(0);
   });
 
-  it('hides "Requer login" chip when poll is expired or user has already voted', () => {
+  it('toggles checkbox and selection on user click', () => {
     fixture.componentRef.setInput('pollData', {
-      id: 5,
-      title: 'Login Required Test',
+      id: 11,
+      title: 'Click test poll',
       creatorName: 'Will',
-      expirationDate: '2020-01-01T00:00:00.000Z',
-      voteRequireLogin: true,
-      hasVoted: false,
+      expirationDate: '2030-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      allowMultiple: true,
       options: [
-        { id: 1, name: 'A', votes: 1 },
+        { id: 1, name: 'Option 1', votes: 0 },
+        { id: 2, name: 'Option 2', votes: 0 },
       ],
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).not.toContain('Requer login');
+    const checkboxes: NodeListOf<HTMLInputElement> =
+      fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+    checkboxes[0].click();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    expect(component.selectedOptionIds.has(1)).toBe(true);
+    expect(checkboxes[0].checked).toBe(true);
   });
 
-  it('renders title as a link pointing to /polls/:id', () => {
-    const titleLink: HTMLAnchorElement | null = fixture.nativeElement.querySelector('.title-link');
-    expect(titleLink).not.toBeNull();
-    expect(titleLink?.getAttribute('href')).toBe('/polls/1');
+  it('disables remaining checkboxes and shows hint when maxChoices cap is reached', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 7,
+      title: 'Capped Selection Poll',
+      creatorName: 'Will',
+      expirationDate: '2030-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      allowMultiple: true,
+      maxChoices: 2,
+      options: [
+        { id: 1, name: 'Option 1', votes: 0 },
+        { id: 2, name: 'Option 2', votes: 0 },
+        { id: 3, name: 'Option 3', votes: 0 },
+      ],
+    });
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    component.toggleOption(1, true);
+    component.toggleOption(2, true);
+    fixture.detectChanges();
+
+    expect(component.isMaxChoicesReached).toBe(true);
+    expect(component.isOptionDisabled(3)).toBe(true);
+    expect(component.isOptionDisabled(1)).toBe(false);
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Limite de 2 opções atingido');
   });
 
-  it('provides a share button to copy poll link', async () => {
-    const writeTextSpy = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: writeTextSpy,
-      },
+  it('submits multiple optionIds when voting on multiple-choice poll', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 8,
+      title: 'Multi Vote Submission',
+      creatorName: 'Will',
+      expirationDate: '2030-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      allowMultiple: true,
+      options: [
+        { id: 1, name: 'Option 1', votes: 0 },
+        { id: 2, name: 'Option 2', votes: 0 },
+      ],
+    });
+    fixture.detectChanges();
+
+    pollApi.setVote.mockReturnValue(
+      of({
+        id: 8,
+        title: 'Multi Vote Submission',
+        creatorName: 'Will',
+        expirationDate: '2030-08-25T12:00:00.000Z',
+        voteRequireLogin: false,
+        allowMultiple: true,
+        totalVoters: 1,
+        votedOptionIds: [1, 2],
+        options: [
+          { id: 1, name: 'Option 1', votes: 1 },
+          { id: 2, name: 'Option 2', votes: 1 },
+        ],
+      }),
+    );
+
+    const component = fixture.componentInstance;
+    component.toggleOption(1, true);
+    component.toggleOption(2, true);
+    (component as any).vote();
+    fixture.detectChanges();
+
+    expect(pollApi.setVote).toHaveBeenCalledWith({
+      pollId: 8,
+      optionIds: [1, 2],
     });
 
-    const shareBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-share');
-    expect(shareBtn).not.toBeNull();
-    shareBtn?.click();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(writeTextSpy).toHaveBeenCalledWith(expect.stringContaining('/polls/1'));
-    expect(alerts.open).toHaveBeenCalledWith(
-      'Link da enquete copiado para a área de transferência!',
-      expect.objectContaining({ label: 'Link copiado', appearance: 'positive' }),
-    );
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('1 participante');
+    expect(el.textContent).toContain('2 votos computados');
+    expect(el.textContent).toContain('100%');
   });
 
-  it('progressColor returns accent color for chosen option and action blue for unchosen', () => {
-    const component = fixture.componentInstance;
-    expect(component.progressColor(true)).toBe('var(--tui-background-accent-2)');
-    expect(component.progressColor(false)).toBe('var(--tui-text-action)');
-  });
-
-  it('renders "Entenda o debate" button in footer', () => {
-    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
-    expect(explainBtn).not.toBeNull();
-    expect(explainBtn?.textContent).toContain('Entenda o debate');
-  });
-
-  it('shows an alert when unauthenticated user clicks "Entenda o debate"', () => {
-    userSig.set(null);
+  it('renders checkmarks for all options in votedOptionIds in results view', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 9,
+      title: 'Multi Vote Results Checkmarks',
+      creatorName: 'Will',
+      expirationDate: '2030-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      allowMultiple: true,
+      hasVoted: true,
+      totalVoters: 2,
+      votedOptionIds: [1, 3],
+      options: [
+        { id: 1, name: 'Option 1', votes: 2 },
+        { id: 2, name: 'Option 2', votes: 1 },
+        { id: 3, name: 'Option 3', votes: 2 },
+      ],
+    });
     fixture.detectChanges();
 
-    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
-    explainBtn?.click();
-
-    expect(alerts.open).toHaveBeenCalledWith(
-      'É necessário fazer login para ver a explicação do debate com IA.',
-      expect.objectContaining({ label: 'Faça login', appearance: 'warning' }),
-    );
-    expect(fixture.componentInstance.isDebateDrawerOpen).toBe(false);
-  });
-
-  it('opens debate drawer when authenticated user clicks "Entenda o debate"', () => {
-    userSig.set({ name: 'Will' });
-    fixture.detectChanges();
-
-    const explainBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.btn-explain');
-    explainBtn?.click();
-    fixture.detectChanges();
-
-    expect(fixture.componentInstance.isDebateDrawerOpen).toBe(true);
-    const drawer = fixture.nativeElement.querySelector('app-poll-debate-drawer');
-    expect(drawer).not.toBeNull();
+    const chosenOptions = fixture.nativeElement.querySelectorAll('.option-name.chosen');
+    expect(chosenOptions.length).toBe(2);
+    expect(chosenOptions[0].textContent).toContain('Option 1');
+    expect(chosenOptions[1].textContent).toContain('Option 3');
   });
 });

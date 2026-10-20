@@ -29,6 +29,7 @@ describe('Enquetes API', () => {
     },
     voto: {
       create: jest.fn(),
+      createMany: jest.fn(),
       count: jest.fn(),
     },
   };
@@ -44,6 +45,9 @@ describe('Enquetes API', () => {
     createdAt: new Date('2026-08-11T12:00:00.000Z'),
     updatedAt: new Date('2026-08-11T12:00:00.000Z'),
     voteRequireLogin: false,
+    allowMultiple: false,
+    maxChoices: null,
+    totalVoters: 0n,
     expirationDate: new Date('2030-08-25T12:00:00.000Z'),
     usuarioId: 1n,
     usuario,
@@ -102,11 +106,15 @@ describe('Enquetes API', () => {
           creatorName: 'Will',
           expirationDate: '2030-08-25T12:00:00.000Z',
           voteRequireLogin: false,
+          allowMultiple: false,
+          maxChoices: null,
+          totalVoters: 0,
           options: [
             { id: 20, name: 'NestJS', votes: 0 },
             { id: 21, name: 'Spring', votes: 1 },
           ],
           hasVoted: false,
+          votedOptionIds: [],
           votedOptionId: null,
         },
       ]);
@@ -124,6 +132,7 @@ describe('Enquetes API', () => {
       .expect((response) => {
         expect(response.body).toHaveLength(1);
         expect(response.body[0].hasVoted).toBe(true);
+        expect(response.body[0].votedOptionIds).toEqual([20]);
         expect(response.body[0].votedOptionId).toBe(20);
       });
   });
@@ -156,11 +165,15 @@ describe('Enquetes API', () => {
           creatorName: 'Will',
           expirationDate: '2030-08-25T12:00:00.000Z',
           voteRequireLogin: false,
+          allowMultiple: false,
+          maxChoices: null,
+          totalVoters: 0,
           options: [
             { id: 20, name: 'NestJS', votes: 0 },
             { id: 21, name: 'Spring', votes: 1 },
           ],
           hasVoted: false,
+          votedOptionIds: [],
           votedOptionId: null,
         });
       });
@@ -201,7 +214,7 @@ describe('Enquetes API', () => {
   it('rejects identifiers outside JavaScript safe integer range', async () => {
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: Number.MAX_SAFE_INTEGER + 1, optionId: 20 })
+      .send({ pollId: Number.MAX_SAFE_INTEGER + 1, optionIds: [20] })
       .expect(400);
   });
 
@@ -236,12 +249,73 @@ describe('Enquetes API', () => {
     expect(data.usuario).toEqual({ connect: { id: 1n } });
   });
 
+  it('creates a poll with allowMultiple and maxChoices', async () => {
+    prisma.enquete.create.mockResolvedValue({
+      ...enquete,
+      allowMultiple: true,
+      maxChoices: 2,
+      totalVoters: 0n,
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls')
+      .send({
+        title: 'Tech stack?',
+        options: ['NestJS', 'Angular', 'Postgres'],
+        allowMultiple: true,
+        maxChoices: 2,
+      })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.allowMultiple).toBe(true);
+        expect(res.body.maxChoices).toBe(2);
+        expect(res.body.totalVoters).toBe(0);
+      });
+
+    expect(prisma.enquete.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          allowMultiple: true,
+          maxChoices: 2,
+          totalVoters: 0n,
+        }),
+      }),
+    );
+  });
+
+  it('rejects poll creation if maxChoices exceeds number of options', async () => {
+    await request(app.getHttpServer())
+      .post('/polls')
+      .send({
+        title: 'Tech stack?',
+        options: ['NestJS', 'Angular'],
+        allowMultiple: true,
+        maxChoices: 5,
+      })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(400);
+  });
+
+  it('rejects poll creation if maxChoices is set but allowMultiple is false', async () => {
+    await request(app.getHttpServer())
+      .post('/polls')
+      .send({
+        title: 'Tech stack?',
+        options: ['NestJS', 'Angular'],
+        allowMultiple: false,
+        maxChoices: 2,
+      })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(400);
+  });
+
   it('rejects a vote for an unknown poll', async () => {
     prisma.enquete.findUnique.mockResolvedValue(null);
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 999, optionId: 20 })
+      .send({ pollId: 999, optionIds: [20] })
       .expect(400);
   });
 
@@ -253,13 +327,13 @@ describe('Enquetes API', () => {
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 20 })
+      .send({ pollId: 10, optionIds: [20] })
       .expect(400);
 
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
-  it('rejects a vote without an option', async () => {
+  it('rejects a vote without options', async () => {
     prisma.enquete.findUnique.mockResolvedValue({
       ...enquete,
       opcoes: [...enquete.opcoes],
@@ -271,6 +345,56 @@ describe('Enquetes API', () => {
       .expect(400);
   });
 
+  it('rejects duplicate optionIds in payload', async () => {
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionIds: [20, 20] })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.message).toBe('Duplicate option IDs are not allowed.');
+      });
+  });
+
+  it('rejects multiple choices if poll has allowMultiple: false', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      allowMultiple: false,
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionIds: [20, 21] })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.message).toBe(
+          'This poll does not allow multiple choices.',
+        );
+      });
+  });
+
+  it('rejects choices exceeding maxChoices when allowMultiple is true', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      allowMultiple: true,
+      maxChoices: 2,
+      opcoes: [
+        { id: 20n, name: 'A', votes: 0n, enqueteId: 10n },
+        { id: 21n, name: 'B', votes: 0n, enqueteId: 10n },
+        { id: 22n, name: 'C', votes: 0n, enqueteId: 10n },
+      ],
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionIds: [20, 21, 22] })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.message).toBe(
+          'You cannot select more than 2 options.',
+        );
+      });
+  });
+
   it('rejects an option that does not belong to the poll', async () => {
     prisma.enquete.findUnique.mockResolvedValue({
       ...enquete,
@@ -279,10 +403,10 @@ describe('Enquetes API', () => {
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 999 })
+      .send({ pollId: 10, optionIds: [999] })
       .expect(400);
 
-    expect(prisma.voto.create).not.toHaveBeenCalled();
+    expect(prisma.voto.createMany).not.toHaveBeenCalled();
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
@@ -291,10 +415,12 @@ describe('Enquetes API', () => {
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
-    prisma.voto.create.mockResolvedValue({ id: 1n });
+    prisma.voto.createMany.mockResolvedValue({ count: 1 });
     prisma.opcao.updateMany.mockResolvedValue({ count: 1 });
+    prisma.enquete.update.mockResolvedValue({ ...enquete, totalVoters: 1n });
     prisma.enquete.findUniqueOrThrow.mockResolvedValue({
       ...enquete,
+      totalVoters: 1n,
       opcoes: [
         { ...enquete.opcoes[0], votes: 1n },
         enquete.opcoes[1],
@@ -303,22 +429,30 @@ describe('Enquetes API', () => {
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 20 })
+      .send({ pollId: 10, optionIds: [20] })
       .expect(200)
       .expect((response) => {
         expect(response.body.options[0].votes).toBe(1);
+        expect(response.body.totalVoters).toBe(1);
       });
 
-    expect(prisma.voto.create).toHaveBeenCalledWith({
-      data: {
-        enqueteId: 10n,
-        opcaoId: 20n,
-        usuarioId: null,
-      },
+    expect(prisma.voto.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          ballotId: expect.any(String),
+          enqueteId: 10n,
+          opcaoId: 20n,
+          usuarioId: null,
+        }),
+      ],
     });
     expect(prisma.opcao.updateMany).toHaveBeenCalledWith({
-      where: { id: 20n, enqueteId: 10n },
+      where: { id: { in: [20n] }, enqueteId: 10n },
       data: { votes: { increment: 1 } },
+    });
+    expect(prisma.enquete.update).toHaveBeenCalledWith({
+      where: { id: 10n },
+      data: { totalVoters: { increment: 1 } },
     });
   });
 
@@ -327,28 +461,109 @@ describe('Enquetes API', () => {
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
-    prisma.voto.create.mockResolvedValue({ id: 2n });
+    prisma.voto.count.mockResolvedValue(0);
+    prisma.voto.createMany.mockResolvedValue({ count: 1 });
     prisma.opcao.updateMany.mockResolvedValue({ count: 1 });
+    prisma.enquete.update.mockResolvedValue({ ...enquete, totalVoters: 1n });
     prisma.enquete.findUniqueOrThrow.mockResolvedValue({
       ...enquete,
+      totalVoters: 1n,
       opcoes: [
         { ...enquete.opcoes[0], votes: 1n },
         enquete.opcoes[1],
+      ],
+      votos: [{ opcaoId: 20n }],
+    });
+
+    await request(app.getHttpServer())
+      .post('/polls/vote')
+      .send({ pollId: 10, optionIds: [20] })
+      .set('Cookie', 'enqueteme_session=valid-token')
+      .expect(200);
+
+    expect(prisma.voto.count).toHaveBeenCalledWith({
+      where: { enqueteId: 10n, usuarioId: 1n },
+    });
+    expect(prisma.voto.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          ballotId: expect.any(String),
+          enqueteId: 10n,
+          opcaoId: 20n,
+          usuarioId: 1n,
+        }),
+      ],
+    });
+  });
+
+  it('submits multiple votes successfully with ballotId and increments totalVoters and all options', async () => {
+    prisma.enquete.findUnique.mockResolvedValue({
+      ...enquete,
+      allowMultiple: true,
+      maxChoices: 2,
+      opcoes: [
+        { id: 20n, name: 'A', votes: 0n, enqueteId: 10n },
+        { id: 21n, name: 'B', votes: 0n, enqueteId: 10n },
+      ],
+    });
+    prisma.voto.createMany.mockResolvedValue({ count: 2 });
+    prisma.opcao.updateMany.mockResolvedValue({ count: 2 });
+    prisma.enquete.update.mockResolvedValue({
+      ...enquete,
+      allowMultiple: true,
+      maxChoices: 2,
+      totalVoters: 1n,
+    });
+    prisma.enquete.findUniqueOrThrow.mockResolvedValue({
+      ...enquete,
+      allowMultiple: true,
+      maxChoices: 2,
+      totalVoters: 1n,
+      opcoes: [
+        { id: 20n, name: 'A', votes: 1n, enqueteId: 10n },
+        { id: 21n, name: 'B', votes: 1n, enqueteId: 10n },
       ],
     });
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 20 })
-      .set('Cookie', 'enqueteme_session=valid-token')
-      .expect(200);
+      .send({ pollId: 10, optionIds: [20, 21] })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.totalVoters).toBe(1);
+        expect(res.body.allowMultiple).toBe(true);
+        expect(res.body.maxChoices).toBe(2);
+        expect(res.body.options[0].votes).toBe(1);
+        expect(res.body.options[1].votes).toBe(1);
+      });
 
-    expect(prisma.voto.create).toHaveBeenCalledWith({
-      data: {
-        enqueteId: 10n,
-        opcaoId: 20n,
-        usuarioId: 1n,
-      },
+    expect(prisma.voto.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          ballotId: expect.any(String),
+          enqueteId: 10n,
+          opcaoId: 20n,
+          usuarioId: null,
+        }),
+        expect.objectContaining({
+          ballotId: expect.any(String),
+          enqueteId: 10n,
+          opcaoId: 21n,
+          usuarioId: null,
+        }),
+      ],
+    });
+
+    const callData = prisma.voto.createMany.mock.calls[0][0].data;
+    expect(callData[0].ballotId).toBe(callData[1].ballotId);
+
+    expect(prisma.opcao.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: [20n, 21n] }, enqueteId: 10n },
+      data: { votes: { increment: 1 } },
+    });
+    expect(prisma.enquete.update).toHaveBeenCalledWith({
+      where: { id: 10n },
+      data: { totalVoters: { increment: 1 } },
     });
   });
 
@@ -357,19 +572,15 @@ describe('Enquetes API', () => {
       ...enquete,
       opcoes: [...enquete.opcoes],
     });
-    prisma.voto.create.mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '7.9.1',
-      }),
-    );
+    prisma.voto.count.mockResolvedValue(1);
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 20 })
+      .send({ pollId: 10, optionIds: [20] })
       .set('Cookie', 'enqueteme_session=valid-token')
       .expect(409);
 
+    expect(prisma.voto.createMany).not.toHaveBeenCalled();
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
@@ -381,10 +592,10 @@ describe('Enquetes API', () => {
 
     await request(app.getHttpServer())
       .post('/polls/vote')
-      .send({ pollId: 10, optionId: 20 })
+      .send({ pollId: 10, optionIds: [20] })
       .expect(401);
 
-    expect(prisma.voto.create).not.toHaveBeenCalled();
+    expect(prisma.voto.createMany).not.toHaveBeenCalled();
     expect(prisma.opcao.updateMany).not.toHaveBeenCalled();
   });
 
@@ -602,6 +813,45 @@ describe('Enquetes API', () => {
       });
     });
 
+    it('updates allowMultiple and maxChoices when zero votes', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(0);
+      prisma.opcao.deleteMany.mockResolvedValue({ count: 2 });
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        allowMultiple: true,
+        maxChoices: 2,
+        opcoes: [
+          { id: 30n, name: 'Option A', votes: 0n, enqueteId: 10n },
+          { id: 31n, name: 'Option B', votes: 0n, enqueteId: 10n },
+        ],
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .send({
+          title: 'New title',
+          options: ['Option A', 'Option B'],
+          allowMultiple: true,
+          maxChoices: 2,
+        })
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body.allowMultiple).toBe(true);
+          expect(response.body.maxChoices).toBe(2);
+        });
+
+      expect(prisma.enquete.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            allowMultiple: true,
+            maxChoices: 2,
+          }),
+        }),
+      );
+    });
+
     it('updates voteRequireLogin flag', async () => {
       prisma.enquete.findUnique.mockResolvedValue(enquete);
       prisma.voto.count.mockResolvedValue(0);
@@ -712,7 +962,9 @@ describe('Enquetes API', () => {
 
     it('supports comma-separated options query parameter', async () => {
       await request(app.getHttpServer())
-        .get('/polls/check-duplicate?title=Melhor%20framework?&options=NestJS,Spring')
+        .get(
+          '/polls/check-duplicate?title=Melhor%20framework?&options=NestJS,Spring',
+        )
         .expect(200)
         .expect((response) => {
           expect(response.body.duplicateFound).toBe(true);
@@ -722,8 +974,9 @@ describe('Enquetes API', () => {
     });
 
     it('is not intercepted by GET /polls/:id', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/polls/check-duplicate?title=Valid%20Title');
+      const response = await request(app.getHttpServer()).get(
+        '/polls/check-duplicate?title=Valid%20Title',
+      );
       expect(response.status).toBe(200);
     });
   });

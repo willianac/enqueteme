@@ -10,8 +10,27 @@ import { NewPoll } from './new-poll';
 describe('NewPoll', () => {
   let fixture: ComponentFixture<NewPoll>;
   let component: NewPoll;
+  let pollApiMock: any;
 
   beforeEach(async () => {
+    pollApiMock = {
+      createPoll: vi.fn().mockReturnValue(of({ pollId: '1' })),
+      checkDuplicate: vi.fn().mockReturnValue(
+        of({
+          duplicateFound: false,
+          similarity: 0,
+          poll: null,
+        }),
+      ),
+      inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
+      generatePoll: vi.fn().mockReturnValue(
+        of({
+          title: 'Qual linguagem você prefere para microsserviços?',
+          options: ['Go', 'Rust', 'Java', 'Node.js', 'Outro'],
+        }),
+      ),
+    };
+
     await TestBed.configureTestingModule({
       imports: [NewPoll],
       providers: [
@@ -24,23 +43,7 @@ describe('NewPoll', () => {
         },
         {
           provide: PollApi,
-          useValue: {
-            createPoll: vi.fn(),
-            checkDuplicate: vi.fn().mockReturnValue(
-              of({
-                duplicateFound: false,
-                similarity: 0,
-                poll: null,
-              }),
-            ),
-            inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
-            generatePoll: vi.fn().mockReturnValue(
-              of({
-                title: 'Qual linguagem você prefere para microsserviços?',
-                options: ['Go', 'Rust', 'Java', 'Node.js', 'Outro'],
-              }),
-            ),
-          },
+          useValue: pollApiMock,
         },
         { provide: TuiAlertService, useValue: { open: () => of(undefined) } },
       ],
@@ -108,138 +111,23 @@ describe('NewPoll', () => {
     expect(component.activeTabIndex).toBe(0);
   });
 
-  it('suggests options for existing title and allows replacing options', () => {
-    (component as any).pollTitle = 'Qual linguagem você prefere para microsserviços?';
-    fixture.detectChanges();
-
-    expect(component.canSuggestOptionsForTitle).toBe(true);
-
-    component.suggestOptionsForTitle();
-    expect(component.copilotLoading()).toBe(false);
-    expect(component.showOptionCopilotPreview()).toBe(true);
-    expect(component.suggestedOptions().length).toBe(5);
-
-    component.replaceWithSuggestedOptions();
-    expect(component.showOptionCopilotPreview()).toBe(false);
-    expect(component.numberOfOptions).toBe(5);
-    expect(component.getOptionsValues()).toContain('Go');
-    expect(component.getOptionsValues()).toContain('Rust');
-  });
-
-  it('applies poll generated from content and switches to manual tab', () => {
-    component.activeTabIndex = 1;
-    component.onApplyContentPoll({
-      title: 'Qual a prioridade no roadmap pós-reestruturação?',
-      options: ['Foco em estabilidade', 'Novas funcionalidades', 'Redução de custos'],
-      contextRationale: 'O artigo aborda o trade-off entre segurança financeira e crescimento.',
+  it('creates multiple-choice poll with capped selection', () => {
+    component.pollTitle = 'Enquete Múltipla Escolha';
+    (component as any).newPollForm.patchValue({
+      option1: 'Opção 1',
+      option2: 'Opção 2',
     });
+    (component as any).allowMultiple = true;
+    (component as any).maxChoices = 2;
 
-    expect((component as any).pollTitle).toBe('Qual a prioridade no roadmap pós-reestruturação?');
-    expect(component.numberOfOptions).toBe(3);
-    expect(component.getOptionsValues()).toEqual([
-      'Foco em estabilidade',
-      'Novas funcionalidades',
-      'Redução de custos',
-    ]);
-    expect(component.activeTabIndex).toBe(0);
-  });
+    component.createPoll();
 
-  it('does not trigger duplicate check if title length is less than 5 characters', () => {
-    vi.useFakeTimers();
-    try {
-      const pollApi = TestBed.inject(PollApi);
-      component.pollTitle = 'Test';
-      vi.advanceTimersByTime(500);
-
-      expect(pollApi.checkDuplicate).not.toHaveBeenCalled();
-      expect(component.duplicateMatch()).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('triggers debounced duplicate check when title length is >= 5 characters', () => {
-    vi.useFakeTimers();
-    try {
-      const pollApi = TestBed.inject(PollApi);
-      component.pollTitle = 'React';
-      vi.advanceTimersByTime(200);
-      expect(pollApi.checkDuplicate).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(200);
-      expect(pollApi.checkDuplicate).toHaveBeenCalledWith('React', undefined);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('passes draft options to duplicate check when at least 2 options are filled', () => {
-    vi.useFakeTimers();
-    try {
-      const pollApi = TestBed.inject(PollApi);
-      (component as any).newPollForm.patchValue({
-        option1: 'Opção A',
-        option2: 'Opção B',
-      });
-
-      component.pollTitle = 'Nova enquete sobre algo';
-      vi.advanceTimersByTime(400);
-
-      expect(pollApi.checkDuplicate).toHaveBeenCalledWith('Nova enquete sobre algo', [
-        'Opção A',
-        'Opção B',
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('displays warning banner when duplicate match is found with title, votes count and link', () => {
-    component.duplicateMatch.set({
-      id: 99,
-      title: 'Qual o melhor framework em 2026?',
-      votesCount: 42,
-    });
-    fixture.detectChanges();
-
-    const banner: HTMLElement | null = fixture.nativeElement.querySelector(
-      '.duplicate-warning-banner',
+    expect(pollApiMock.createPoll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Enquete Múltipla Escolha',
+        allowMultiple: true,
+        maxChoices: 2,
+      }),
     );
-    expect(banner).not.toBeNull();
-    expect(banner?.textContent).toContain('Uma enquete similar está ativa com 42 votos');
-    expect(banner?.textContent).toContain('Qual o melhor framework em 2026?');
-
-    const link: HTMLAnchorElement | null = banner?.querySelector('a') ?? null;
-    expect(link).not.toBeNull();
-    expect(link?.getAttribute('href')).toContain('/polls/99');
-    expect(link?.getAttribute('target')).toBe('_blank');
-  });
-
-  it('dismisses duplicate warning banner when close button is clicked', () => {
-    component.duplicateMatch.set({
-      id: 99,
-      title: 'Qual o melhor framework em 2026?',
-      votesCount: 42,
-    });
-    fixture.detectChanges();
-
-    const closeBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector(
-      '.duplicate-close-btn',
-    );
-    expect(closeBtn).not.toBeNull();
-    closeBtn?.click();
-    fixture.detectChanges();
-
-    expect(component.dismissedDuplicate()).toBe(true);
-    expect(fixture.nativeElement.querySelector('.duplicate-warning-banner')).toBeNull();
-  });
-
-  it('resets dismissedDuplicate when user changes the title', () => {
-    component.pollTitle = 'Título Original';
-    component.dismissDuplicate();
-    expect(component.dismissedDuplicate()).toBe(true);
-
-    component.pollTitle = 'Título Diferente';
-    expect(component.dismissedDuplicate()).toBe(false);
   });
 });

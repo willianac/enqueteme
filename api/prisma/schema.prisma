@@ -38,6 +38,9 @@ model Enquete {
   createdAt        DateTime @default(now()) @map("created_at") @db.DateTime(6)
   updatedAt        DateTime @map("updated_at") @db.DateTime(6)
   voteRequireLogin Boolean  @map("vote_require_login")
+  allowMultiple    Boolean  @default(false) @map("allow_multiple")
+  maxChoices       Int?     @map("max_choices")
+  totalVoters      BigInt   @default(0) @map("total_voters")
   expirationDate   DateTime @map("expiration_date") @db.DateTime(6)
   usuarioId        BigInt   @map("usuario_id")
   usuario          Usuario  @relation(fields: [usuarioId], references: [id])
@@ -62,6 +65,7 @@ model Opcao {
 
 model Voto {
   id        BigInt   @id @default(autoincrement())
+  ballotId  String   @map("ballot_id") @db.Char(36)
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(6)
   enqueteId BigInt   @map("enquete_id")
   opcaoId   BigInt   @map("opcao_id")
@@ -70,9 +74,10 @@ model Voto {
   opcao     Opcao    @relation(fields: [opcaoId], references: [id], onDelete: Cascade)
   usuario   Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  @@unique([enqueteId, usuarioId])
+  @@unique([enqueteId, usuarioId, opcaoId])
   @@index([enqueteId])
   @@index([opcaoId])
   @@index([usuarioId])
+  @@index([ballotId])
   @@map("votos")
 }

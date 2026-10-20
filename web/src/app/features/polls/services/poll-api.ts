@@ -30,16 +30,18 @@ type CreatePollResponse = {
   userId: string;
 };
 
-type CreatePollRequest = {
+export type CreatePollRequest = {
   title: string;
   options: string[];
   voteRequireLogin?: boolean;
   durationDays?: number;
+  allowMultiple?: boolean;
+  maxChoices?: number;
 };
 
-type SetVoteRequest = {
+export type SetVoteRequest = {
   pollId: number;
-  optionId: number;
+  optionIds: number[];
 };
 
 export type UpdatePollRequest = {
@@ -47,6 +49,8 @@ export type UpdatePollRequest = {
   options: string[];
   voteRequireLogin?: boolean;
   pollExpirationInDays?: number;
+  allowMultiple?: boolean;
+  maxChoices?: number | null;
 };
 
 @Injectable({
@@ -63,6 +67,8 @@ export class PollApi {
       options: createPollRequest.options,
       voteRequireLogin: createPollRequest.voteRequireLogin,
       pollExpirationInDays: createPollRequest.durationDays,
+      allowMultiple: createPollRequest.allowMultiple,
+      maxChoices: createPollRequest.maxChoices,
     });
   }
 
@@ -77,7 +83,7 @@ export class PollApi {
   public setVote(setVoteRequest: SetVoteRequest): Observable<PollType> {
     return this.http.post<PollType>(`${this.apiUrl}polls/vote`, {
       pollId: setVoteRequest.pollId,
-      optionId: setVoteRequest.optionId,
+      optionIds: setVoteRequest.optionIds,
     });
   }
 

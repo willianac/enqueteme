@@ -60,6 +60,10 @@ export class EditPoll implements OnInit {
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     options: new FormArray<FormControl<string>>([]),
     voteRequireLogin: new FormControl(false),
+    allowMultiple: new FormControl(false),
+    maxChoices: new FormControl<number | null>(null, {
+      validators: [Validators.min(2)],
+    }),
     pollExpirationInDays: new FormControl<number | null>(null, {
       validators: [Validators.min(1)],
     }),
@@ -112,6 +116,15 @@ export class EditPoll implements OnInit {
       return;
     }
 
+    if (raw.allowMultiple && raw.maxChoices) {
+      if (raw.maxChoices < 2 || raw.maxChoices > trimmedOptions.length) {
+        this.errorMessage.set(
+          new TuiValidationError(`O limite de escolhas deve estar entre 2 e ${trimmedOptions.length}.`),
+        );
+        return;
+      }
+    }
+
     this.saving.set(true);
     this.errorMessage.set(null);
 
@@ -121,13 +134,17 @@ export class EditPoll implements OnInit {
         options: trimmedOptions,
         voteRequireLogin: raw.voteRequireLogin ?? false,
         pollExpirationInDays: raw.pollExpirationInDays ?? undefined,
+        allowMultiple: raw.allowMultiple ?? false,
+        maxChoices: raw.allowMultiple && raw.maxChoices ? Number(raw.maxChoices) : null,
       })
       .subscribe({
         next: () => this.router.navigate(['/my-polls']),
         error: (err) => {
           this.saving.set(false);
           if (err.status === 409) {
-            this.errorMessage.set(new TuiValidationError('Esta enquete já possui votos e não pode ser editada.'));
+            this.errorMessage.set(
+              new TuiValidationError('Esta enquete já possui votos e não pode ser editada.'),
+            );
           } else if (err.status === 403 || err.status === 404) {
             this.errorMessage.set(new TuiValidationError('Enquete não encontrada.'));
           } else {
@@ -141,6 +158,8 @@ export class EditPoll implements OnInit {
     this.editForm.patchValue({
       title: poll.title,
       voteRequireLogin: poll.voteRequireLogin,
+      allowMultiple: poll.allowMultiple ?? false,
+      maxChoices: poll.maxChoices ?? null,
     });
 
     const now = new Date();

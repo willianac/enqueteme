@@ -94,6 +94,8 @@ export class NewPoll implements OnInit {
 
   protected pollDuration = 1;
   protected requireLogin = true;
+  protected allowMultiple = false;
+  protected maxChoices: number | null = null;
   protected readonly labels: number[] = [1, 2, 3, 4, 5, 6, 7];
 
   numberOfOptions = 2;
@@ -166,6 +168,13 @@ export class NewPoll implements OnInit {
     return this.pollTitle.trim().length >= 3 && !this.copilotLoading();
   }
 
+  public get isMaxChoicesValid(): boolean {
+    if (!this.allowMultiple || this.maxChoices === null || this.maxChoices === undefined) {
+      return true;
+    }
+    return this.maxChoices >= 2 && this.maxChoices <= this.numberOfOptions;
+  }
+
   public suggestOptionsForTitle(): void {
     if (!this.canSuggestOptionsForTitle) {
       this.alerts
@@ -213,6 +222,9 @@ export class NewPoll implements OnInit {
     }
     this.newPollForm = new FormGroup(newGroup);
     this.numberOfOptions = count;
+    if (this.maxChoices && this.maxChoices > count) {
+      this.maxChoices = count;
+    }
   }
 
   public onApplyCopilotPoll(poll: { title: string; options: string[] }): void {
@@ -303,6 +315,9 @@ export class NewPoll implements OnInit {
     if (this.numberOfOptions > 2) {
       this.newPollForm.removeControl(e);
       this.numberOfOptions -= 1;
+      if (this.maxChoices && this.maxChoices > this.numberOfOptions) {
+        this.maxChoices = this.numberOfOptions;
+      }
     }
   }
 
@@ -328,6 +343,7 @@ export class NewPoll implements OnInit {
       this.pollTitle.trim() !== '' &&
       this.numberOfOptions >= 1 &&
       this.numberOfOptions <= 5 &&
+      this.isMaxChoicesValid &&
       !this.pollWasCreated
     );
   }
@@ -355,6 +371,9 @@ export class NewPoll implements OnInit {
         options: Object.values(options),
         voteRequireLogin: this.requireLogin,
         durationDays: this.pollDuration,
+        allowMultiple: this.allowMultiple,
+        maxChoices:
+          this.allowMultiple && this.maxChoices ? Number(this.maxChoices) : undefined,
       })
       .subscribe({
         next: () => this.onPollCreation(),

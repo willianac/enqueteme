@@ -1,4 +1,4 @@
-import { IsInt, Max, Min } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, Max, Min } from 'class-validator';
 
 export class CreateVotoDto {
   @IsInt()
@@ -6,8 +6,10 @@ export class CreateVotoDto {
   @Max(Number.MAX_SAFE_INTEGER)
   pollId!: number;
 
-  @IsInt()
-  @Min(1)
-  @Max(Number.MAX_SAFE_INTEGER)
-  optionId!: number;
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(Number.MAX_SAFE_INTEGER, { each: true })
+  optionIds!: number[];
 }

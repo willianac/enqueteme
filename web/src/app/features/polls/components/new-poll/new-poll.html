@@ -238,6 +238,37 @@
                 <input id="require-login-toggle" tuiSwitch type="checkbox" [(ngModel)]="requireLogin" />
               </div>
             </div>
+
+            <div class="poll-settings multiple-choice-settings">
+              <div class="left">
+                <div class="setting-info">
+                  <label class="field-label" for="allow-multiple-toggle">Permitir múltipla escolha</label>
+                  <small class="setting-hint text-muted">
+                    {{ allowMultiple ? 'Votantes podem selecionar mais de uma opção' : 'Votantes podem selecionar apenas uma opção' }}
+                  </small>
+                </div>
+                <input id="allow-multiple-toggle" tuiSwitch type="checkbox" [(ngModel)]="allowMultiple" />
+              </div>
+              <div class="right">
+                @if (allowMultiple) {
+                  <div class="setting-info max-choices-wrapper">
+                    <label class="field-label" for="max-choices-input">Limite máximo de escolhas (opcional)</label>
+                    <small class="setting-hint text-muted">Mínimo 2, máximo {{ numberOfOptions }}</small>
+                    <tui-textfield tuiTextfieldSize="m" class="max-choices-input">
+                      <input
+                        id="max-choices-input"
+                        tuiTextfield
+                        type="number"
+                        [min]="2"
+                        [max]="numberOfOptions"
+                        [(ngModel)]="maxChoices"
+                        placeholder="Sem limite"
+                      />
+                    </tui-textfield>
+                  </div>
+                }
+              </div>
+            </div>
           }
         </section>
         <tui-error [error]="cannotCreatePollError" />
@@ -256,7 +287,6 @@
           </section>
 
           <footer class="footer-success">
-            <!-- alterar aqui a logica de criar outra nova enquete -->
             <button tuiButton appearance="secondary" size="m" (click)="pollWasCreated = false">Criar outra enquete</button>
             <button tuiButton appearance="primary" size="m" routerLink="/polls">Ir para enquetes</button>
           </footer>
