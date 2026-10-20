@@ -4,6 +4,9 @@ export type PollType = {
   creatorName: string;
   expirationDate: string;
   voteRequireLogin: boolean;
+  allowMultiple?: boolean;
+  maxChoices?: number | null;
+  totalVoters?: number;
   options: {
     id: number;
     name: string;
@@ -12,5 +15,6 @@ export type PollType = {
     progressColor?: string;
   }[];
   hasVoted?: boolean;
+  votedOptionIds?: number[];
   votedOptionId?: number | null;
 };

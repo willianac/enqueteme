@@ -31,7 +31,7 @@ While basic natural-language poll generation ("Prompt to Poll") is a common star
   * **Missing Escape Hatches:** Recommends adding a *"None of the above"* or *"See results"* option to prevent skewed datasets.
 * **Value:** Raises the overall trustworthiness and analytical quality of community polls.
 
-#### C. "Content-to-Poll" (URL & Text Ingestion)
+#### C. "Content-to-Poll" (URL & Text Ingestion) (DONE)
 * **Concept:** The creator inputs an article URL, release notes, or raw meeting notes. The AI extracts the core dilemma or debate and formulates a poll question with pertinent options.
 * **Example:** Ingesting a framework release document automatically yields: *"Which new feature are you most likely to adopt first?"* with key highlighted features as choices.
 * **Value:** Enables rapid poll generation from existing articles, PRs, and team documentation.
@@ -40,7 +40,7 @@ While basic natural-language poll generation ("Prompt to Poll") is a common star
 
 ### 2. Voting & Voter Experience
 
-#### A. "Explain the Debate" (Context Briefing)
+#### A. "Explain the Debate" (Context Briefing) (DONE)
 * **Concept:** Voters often encounter niche or technical polls where they lack background context (e.g., *"Should we implement strict CSP or report-only?"*). A dedicated *"Explain"* action provides an objective, balanced modal/tooltip:
   * A 1–2 sentence overview of why this issue is actively debated.
   * Bulleted pros & cons for each option.

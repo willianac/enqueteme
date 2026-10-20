@@ -10,8 +10,27 @@ import { NewPoll } from './new-poll';
 describe('NewPoll', () => {
   let fixture: ComponentFixture<NewPoll>;
   let component: NewPoll;
+  let pollApiMock: any;
 
   beforeEach(async () => {
+    pollApiMock = {
+      createPoll: vi.fn().mockReturnValue(of({ pollId: '1' })),
+      checkDuplicate: vi.fn().mockReturnValue(
+        of({
+          duplicateFound: false,
+          similarity: 0,
+          poll: null,
+        }),
+      ),
+      inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
+      generatePoll: vi.fn().mockReturnValue(
+        of({
+          title: 'Qual linguagem você prefere para microsserviços?',
+          options: ['Go', 'Rust', 'Java', 'Node.js', 'Outro'],
+        }),
+      ),
+    };
+
     await TestBed.configureTestingModule({
       imports: [NewPoll],
       providers: [
@@ -24,16 +43,7 @@ describe('NewPoll', () => {
         },
         {
           provide: PollApi,
-          useValue: {
-            createPoll: vi.fn(),
-            inspectPollBias: vi.fn().mockReturnValue(of({ isNeutral: true, score: 100 })),
-            generatePoll: vi.fn().mockReturnValue(
-              of({
-                title: 'Qual linguagem você prefere para microsserviços?',
-                options: ['Go', 'Rust', 'Java', 'Node.js', 'Outro'],
-              }),
-            ),
-          },
+          useValue: pollApiMock,
         },
         { provide: TuiAlertService, useValue: { open: () => of(undefined) } },
       ],
@@ -101,22 +111,23 @@ describe('NewPoll', () => {
     expect(component.activeTabIndex).toBe(0);
   });
 
-  it('suggests options for existing title and allows replacing options', () => {
-    (component as any).pollTitle = 'Qual linguagem você prefere para microsserviços?';
-    fixture.detectChanges();
+  it('creates multiple-choice poll with capped selection', () => {
+    component.pollTitle = 'Enquete Múltipla Escolha';
+    (component as any).newPollForm.patchValue({
+      option1: 'Opção 1',
+      option2: 'Opção 2',
+    });
+    (component as any).allowMultiple = true;
+    (component as any).maxChoices = 2;
 
-    expect(component.canSuggestOptionsForTitle).toBe(true);
+    component.createPoll();
 
-    component.suggestOptionsForTitle();
-    expect(component.copilotLoading()).toBe(false);
-    expect(component.showOptionCopilotPreview()).toBe(true);
-    expect(component.suggestedOptions().length).toBe(5);
-
-    component.replaceWithSuggestedOptions();
-    expect(component.showOptionCopilotPreview()).toBe(false);
-    expect(component.numberOfOptions).toBe(5);
-    expect(component.getOptionsValues()).toContain('Go');
-    expect(component.getOptionsValues()).toContain('Rust');
+    expect(pollApiMock.createPoll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Enquete Múltipla Escolha',
+        allowMultiple: true,
+        maxChoices: 2,
+      }),
+    );
   });
 });
-

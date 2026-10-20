@@ -34,6 +34,7 @@
                 [currentOptions]="getOptionsValues()"
                 [canAddMoreOptions]="canAddMoreOptions"
                 (applyPoll)="onApplyCopilotPoll($event)"
+                (applyContentPoll)="onApplyContentPoll($event)"
                 (addOption)="onAddSuggestedOption($event)"
               />
             </div>
@@ -45,9 +46,40 @@
                   id="poll-title-input"
                   placeholder="Ex: Qual deve ser a prioridade da próxima release?"
                   [(ngModel)]="pollTitle"
+                  (ngModelChange)="onTitleChange($event)"
                   tuiTextfield
                 />
               </tui-textfield>
+
+              @if (duplicateMatch() && !dismissedDuplicate()) {
+                <div class="duplicate-warning-banner" role="alert">
+                  <div class="duplicate-warning-content">
+                    <tui-icon icon="@tui.triangle-alert" class="warning-icon" />
+                    <div class="duplicate-warning-text">
+                      <span>Uma enquete similar está ativa com {{ duplicateMatch()?.votesCount }} votos: '<strong>{{ duplicateMatch()?.title }}</strong>'</span>
+                      <a
+                        [routerLink]="['/polls', duplicateMatch()?.id]"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="view-duplicate-link"
+                      >
+                        Ver enquete
+                      </a>
+                    </div>
+                  </div>
+                  <button
+                    tuiIconButton
+                    tuiButtonClose
+                    type="button"
+                    size="xs"
+                    (click)="dismissDuplicate()"
+                    title="Fechar aviso de duplicidade"
+                    class="duplicate-close-btn"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              }
             </div>
 
             <div class="add-options">
@@ -206,6 +238,37 @@
                 <input id="require-login-toggle" tuiSwitch type="checkbox" [(ngModel)]="requireLogin" />
               </div>
             </div>
+
+            <div class="poll-settings multiple-choice-settings">
+              <div class="left">
+                <div class="setting-info">
+                  <label class="field-label" for="allow-multiple-toggle">Permitir múltipla escolha</label>
+                  <small class="setting-hint text-muted">
+                    {{ allowMultiple ? 'Votantes podem selecionar mais de uma opção' : 'Votantes podem selecionar apenas uma opção' }}
+                  </small>
+                </div>
+                <input id="allow-multiple-toggle" tuiSwitch type="checkbox" [(ngModel)]="allowMultiple" />
+              </div>
+              <div class="right">
+                @if (allowMultiple) {
+                  <div class="setting-info max-choices-wrapper">
+                    <label class="field-label" for="max-choices-input">Limite máximo de escolhas (opcional)</label>
+                    <small class="setting-hint text-muted">Mínimo 2, máximo {{ numberOfOptions }}</small>
+                    <tui-textfield tuiTextfieldSize="m" class="max-choices-input">
+                      <input
+                        id="max-choices-input"
+                        tuiTextfield
+                        type="number"
+                        [min]="2"
+                        [max]="numberOfOptions"
+                        [(ngModel)]="maxChoices"
+                        placeholder="Sem limite"
+                      />
+                    </tui-textfield>
+                  </div>
+                }
+              </div>
+            </div>
           }
         </section>
         <tui-error [error]="cannotCreatePollError" />
@@ -224,7 +287,6 @@
           </section>
 
           <footer class="footer-success">
-            <!-- alterar aqui a logica de criar outra nova enquete -->
             <button tuiButton appearance="secondary" size="m" (click)="pollWasCreated = false">Criar outra enquete</button>
             <button tuiButton appearance="primary" size="m" routerLink="/polls">Ir para enquetes</button>
           </footer>

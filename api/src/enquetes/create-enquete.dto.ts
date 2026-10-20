@@ -39,4 +39,13 @@ export class CreateEnqueteDto {
   @IsInt()
   @Min(1)
   pollExpirationInDays?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  allowMultiple?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(2)
+  maxChoices?: number;
 }

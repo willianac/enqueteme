@@ -25,24 +25,45 @@
       <a [routerLink]="['/polls', pollData.id]" class="title-link">
         {{ pollData.title }}
       </a>
+      @if (pollData.allowMultiple && !voted && !isExpired) {
+        <small class="selection-rule">{{ selectionRuleText }}</small>
+      }
     </h2>
   </header>
 
   @if(!voted && !isExpired) {
     <section>
-      <form [formGroup]="pollForm">
-        @for (option of pollData.options; track option.id) {
-        <label tuiLabel class="option">
-          <input
-            formControlName="option"
-            type="radio"
-            tuiRadio
-            [value]="option.id"
-          />
-          <span>{{ option.name }}</span>
-        </label>
-        }
-      </form>
+      @if (!pollData.allowMultiple) {
+        <form [formGroup]="pollForm">
+          @for (option of pollData.options; track option.id) {
+            <label tuiLabel class="option">
+              <input
+                formControlName="option"
+                type="radio"
+                tuiRadio
+                [value]="option.id"
+              />
+              <span>{{ option.name }}</span>
+            </label>
+          }
+        </form>
+      } @else {
+        <div class="multiple-choice-options">
+          @for (option of pollData.options; track option.id) {
+            <label tuiLabel class="option" [class.option-disabled]="isOptionDisabled(option.id)">
+              <input
+                type="checkbox"
+                tuiCheckbox
+                [formControl]="getOptionControl(option.id)"
+              />
+              <span>{{ option.name }}</span>
+            </label>
+          }
+          @if (isMaxChoicesReached) {
+            <span class="limit-hint">Limite de {{ pollData.maxChoices }} opções atingido.</span>
+          }
+        </div>
+      }
     </section>
     @if (noOptionChosenError) {
       <span tuiMessage appearance="negative">Por favor selecione uma opção</span>
@@ -51,9 +72,9 @@
     <section class="result" animate.enter="enter-animation">
       @for (option of pollData.options; track option.id) {
         <div class="option-row">
-          <span class="option-name" [class.chosen]="option.id === idOptionChosen">
+          <span class="option-name" [class.chosen]="isOptionChosen(option.id)">
             {{ option.name }}
-            @if (option.id === idOptionChosen) {
+            @if (isOptionChosen(option.id)) {
               <tui-icon
                 icon="@tui.circle-check"
                 [style.color]="'var(--tui-background-accent-2)'"
@@ -61,7 +82,7 @@
               />
             }
           </span>
-          <span class="option-votes" [class.chosen]="option.id === idOptionChosen">
+          <span class="option-votes" [class.chosen]="isOptionChosen(option.id)">
             {{ pluralize(option.votes, 'voto', 'votos') }} ({{ percentage(option.votes) }}%)
           </span>
         </div>
@@ -70,7 +91,7 @@
           tuiProgressBar
           [max]="100"
           [value]="percentage(option.votes)"
-          [color]="progressColor(option.id === idOptionChosen)"
+          [color]="progressColor(isOptionChosen(option.id))"
         ></progress>
       }
     </section>
@@ -78,13 +99,29 @@
     
   <footer>
     <div class="poll-info">
-      <span class="text-muted">Total de Votos: {{totalVotes}}</span>
+      @if (pollData.allowMultiple) {
+        <span class="text-muted">{{ pluralize(pollData.totalVoters || 0, 'participante', 'participantes') }} • {{ pluralize(totalVotes, 'voto computado', 'votos computados') }}</span>
+      } @else {
+        <span class="text-muted">Total de Votos: {{totalVotes}}</span>
+      }
       @if (!isExpired) {
         <tui-pin class="pin bg-muted" />
         <span class="text-muted">{{ pluralize(daysRemaining, 'dia', 'dias') }} restantes</span>
       }
     </div>
     <div class="footer-actions">
+      <button
+        tuiButton
+        appearance="flat"
+        size="s"
+        type="button"
+        class="btn-explain"
+        (click)="explainDebate($event)"
+        title="Entenda o debate com IA"
+      >
+        <tui-icon icon="@tui.sparkles" class="btn-sparkle-icon" />
+        <span>Entenda o debate</span>
+      </button>
       <button
         tuiButton
         appearance="flat"
@@ -105,3 +142,12 @@
     </div>
   </footer>
 </div>
+
+@if (isDebateDrawerOpen) {
+  <app-poll-debate-drawer
+    [pollId]="pollData.id"
+    [pollTitle]="pollData.title"
+    [options]="pollOptionsNames"
+    (close)="isDebateDrawerOpen = false"
+  />
+}

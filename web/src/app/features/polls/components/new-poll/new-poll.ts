@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiPlatform, TuiValidationError } from '@taiga-ui/cdk';
@@ -16,11 +17,22 @@ import { TuiButtonClose, TuiSlider, TuiSwitch, TuiTabs } from '@taiga-ui/kit';
 
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { PollApi } from '../../services/poll-api';
+import { DuplicatePollCheckResult, PollApi } from '../../services/poll-api';
 import { RouterLink } from '@angular/router';
 import { UserApi } from '../../../auth/services/user-api';
 import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspector';
 import { PollCopilot } from '../poll-copilot/poll-copilot';
+import { GeneratePollFromContentResponse } from '../../../../shared/types/AiInspector';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  of,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 @Component({
   selector: 'app-new-poll',
@@ -54,6 +66,7 @@ export class NewPoll implements OnInit {
   readonly pollApi = inject(PollApi);
   readonly userApi = inject(UserApi);
   readonly alerts = inject(TuiAlertService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected newPollForm: FormGroup = new FormGroup({
     option1: new FormControl(''),
@@ -62,9 +75,27 @@ export class NewPoll implements OnInit {
 
   protected cannotCreatePollError: TuiValidationError | null = null;
 
-  protected pollTitle: string = '';
+  private _pollTitle = '';
+  public get pollTitle(): string {
+    return this._pollTitle;
+  }
+  public set pollTitle(value: string) {
+    if (this._pollTitle !== value) {
+      this._pollTitle = value;
+      this.titleChange$.next(value);
+    }
+  }
+
+  private dismissedTitle = '';
+  private readonly titleChange$ = new Subject<string>();
+
+  readonly duplicateMatch = signal<DuplicatePollCheckResult['poll'] | null>(null);
+  readonly dismissedDuplicate = signal(false);
+
   protected pollDuration = 1;
   protected requireLogin = true;
+  protected allowMultiple = false;
+  protected maxChoices: number | null = null;
   protected readonly labels: number[] = [1, 2, 3, 4, 5, 6, 7];
 
   numberOfOptions = 2;
@@ -76,8 +107,72 @@ export class NewPoll implements OnInit {
   readonly showOptionCopilotPreview = signal(false);
   readonly suggestedOptions = signal<string[]>([]);
 
+  constructor() {
+    this.titleChange$
+      .pipe(
+        map((title) => title.trim()),
+        distinctUntilChanged(),
+        tap((title) => {
+          if (title !== this.dismissedTitle) {
+            this.dismissedDuplicate.set(false);
+          }
+          if (title.length < 5) {
+            this.duplicateMatch.set(null);
+          }
+        }),
+        debounceTime(400),
+        switchMap((title) => {
+          if (title.length < 5) {
+            return of<DuplicatePollCheckResult>({
+              duplicateFound: false,
+              similarity: 0,
+              poll: null,
+            });
+          }
+          const filledOptions = this.getOptionsValues()
+            .map((o) => o.trim())
+            .filter((o) => o.length > 0);
+          const options = filledOptions.length >= 2 ? filledOptions : undefined;
+          return this.pollApi.checkDuplicate(title, options).pipe(
+            catchError((err) => {
+              console.error(err);
+              return of<DuplicatePollCheckResult>({
+                duplicateFound: false,
+                similarity: 0,
+                poll: null,
+              });
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        if (result.duplicateFound && result.poll) {
+          this.duplicateMatch.set(result.poll);
+        } else {
+          this.duplicateMatch.set(null);
+        }
+      });
+  }
+
+  public onTitleChange(value: string): void {
+    this.pollTitle = value;
+  }
+
+  public dismissDuplicate(): void {
+    this.dismissedDuplicate.set(true);
+    this.dismissedTitle = this.pollTitle.trim();
+  }
+
   public get canSuggestOptionsForTitle(): boolean {
     return this.pollTitle.trim().length >= 3 && !this.copilotLoading();
+  }
+
+  public get isMaxChoicesValid(): boolean {
+    if (!this.allowMultiple || this.maxChoices === null || this.maxChoices === undefined) {
+      return true;
+    }
+    return this.maxChoices >= 2 && this.maxChoices <= this.numberOfOptions;
   }
 
   public suggestOptionsForTitle(): void {
@@ -127,6 +222,9 @@ export class NewPoll implements OnInit {
     }
     this.newPollForm = new FormGroup(newGroup);
     this.numberOfOptions = count;
+    if (this.maxChoices && this.maxChoices > count) {
+      this.maxChoices = count;
+    }
   }
 
   public onApplyCopilotPoll(poll: { title: string; options: string[] }): void {
@@ -138,6 +236,21 @@ export class NewPoll implements OnInit {
         label: 'Sucesso',
         appearance: 'positive',
       })
+      .subscribe();
+  }
+
+  public onApplyContentPoll(result: GeneratePollFromContentResponse): void {
+    this.pollTitle = result.title;
+    this.setOptionsList(result.options);
+    this.activeTabIndex = 0;
+    this.alerts
+      .open(
+        `Enquete gerada a partir do conteúdo! A IA identificou o seguinte dilema central: ${result.contextRationale}`,
+        {
+          label: 'Debate Central Identificado',
+          appearance: 'positive',
+        },
+      )
       .subscribe();
   }
 
@@ -163,7 +276,7 @@ export class NewPoll implements OnInit {
     this.numberOfOptions += 1;
     this.newPollForm.addControl(
       `option${this.numberOfOptions}`,
-      new FormControl<string>('', { nonNullable: true })
+      new FormControl<string>('', { nonNullable: true }),
     );
   }
 
@@ -194,7 +307,7 @@ export class NewPoll implements OnInit {
     this.numberOfOptions += 1;
     this.newPollForm.addControl(
       `option${this.numberOfOptions}`,
-      new FormControl<string>(optionText, { nonNullable: true })
+      new FormControl<string>(optionText, { nonNullable: true }),
     );
   }
 
@@ -202,12 +315,17 @@ export class NewPoll implements OnInit {
     if (this.numberOfOptions > 2) {
       this.newPollForm.removeControl(e);
       this.numberOfOptions -= 1;
+      if (this.maxChoices && this.maxChoices > this.numberOfOptions) {
+        this.maxChoices = this.numberOfOptions;
+      }
     }
   }
 
   public onPollCreation() {
     this.alerts.open('Sua enquete foi criada com sucesso!', { label: 'Criada' }).subscribe();
     this.pollWasCreated = true;
+    this.duplicateMatch.set(null);
+    this.dismissedDuplicate.set(false);
   }
 
   public onPollCreationError(err: any) {
@@ -225,19 +343,22 @@ export class NewPoll implements OnInit {
       this.pollTitle.trim() !== '' &&
       this.numberOfOptions >= 1 &&
       this.numberOfOptions <= 5 &&
+      this.isMaxChoicesValid &&
       !this.pollWasCreated
     );
   }
 
   public createPoll() {
-    if(!this.userApi.user()) {
-      this.alerts.open('Por favor, faça o login antes.', { label: 'Erro', appearance: "negative" }).subscribe();
+    if (!this.userApi.user()) {
+      this.alerts
+        .open('Por favor, faça o login antes.', { label: 'Erro', appearance: 'negative' })
+        .subscribe();
       return;
     }
 
     if (!this.isPollCreationAllowed()) {
       this.cannotCreatePollError = new TuiValidationError(
-        'Por favor, preencha todos os campos para criar a enquete.'
+        'Por favor, preencha todos os campos para criar a enquete.',
       );
       return;
     }
@@ -250,6 +371,9 @@ export class NewPoll implements OnInit {
         options: Object.values(options),
         voteRequireLogin: this.requireLogin,
         durationDays: this.pollDuration,
+        allowMultiple: this.allowMultiple,
+        maxChoices:
+          this.allowMultiple && this.maxChoices ? Number(this.maxChoices) : undefined,
       })
       .subscribe({
         next: () => this.onPollCreation(),
@@ -258,10 +382,13 @@ export class NewPoll implements OnInit {
   }
 
   ngOnInit() {
-    if(!this.userApi.user()) {
+    if (!this.userApi.user()) {
       this.alerts
-      .open('É necessário realizar o login antes de criar uma enquete.', { label: 'Atenção', appearance: "warning" })
-      .subscribe();
+        .open('É necessário realizar o login antes de criar uma enquete.', {
+          label: 'Atenção',
+          appearance: 'warning',
+        })
+        .subscribe();
     }
   }
 }

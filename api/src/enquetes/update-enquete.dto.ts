@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateEnqueteDto {
@@ -39,4 +40,14 @@ export class UpdateEnqueteDto {
   @IsInt()
   @Min(1)
   pollExpirationInDays?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  allowMultiple?: boolean;
+
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== undefined)
+  @IsInt()
+  @Min(2)
+  maxChoices?: number | null;
 }

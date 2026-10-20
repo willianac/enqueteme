@@ -37,6 +37,62 @@
     margin-bottom: 0.5rem;
   }
 
+  .duplicate-warning-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--tui-background-warning-1, rgba(255, 171, 0, 0.1));
+    border: 1px solid var(--tui-border-warning, #ffab00);
+    border-radius: var(--tui-radius-m, 8px);
+    animation: fadeIn 0.3s ease-in-out;
+
+    .duplicate-warning-content {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+
+      .warning-icon {
+        color: var(--tui-text-warning, #e67e22);
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      .duplicate-warning-text {
+        font-size: 0.85rem;
+        color: var(--tui-text-primary);
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+
+        strong {
+          font-weight: 600;
+        }
+
+        .view-duplicate-link {
+          color: var(--tui-text-action, #3b82f6);
+          font-weight: 600;
+          text-decoration: underline;
+          cursor: pointer;
+          white-space: nowrap;
+
+          &:hover {
+            color: var(--tui-text-action-hover, #2563eb);
+          }
+        }
+      }
+    }
+
+    .duplicate-close-btn {
+      flex-shrink: 0;
+    }
+  }
+
   .creation-tabs {
     margin-top: 1rem;
     margin-bottom: 1.5rem;
