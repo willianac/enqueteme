@@ -1,6 +1,7 @@
 ---
 name: frontend-engineer
 description: Angular frontend engineer specializing in Angular 21, Taiga UI, LESS styling, and Vitest testing.
+model: flash
 enable_write_tools: true
 enable_mcp_tools: false
 enable_subagent_tools: false

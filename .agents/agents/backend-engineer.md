@@ -1,6 +1,7 @@
 ---
 name: backend-engineer
 description: NestJS backend engineer specializing in NestJS 11, Prisma, MySQL/MariaDB, REST APIs, and Jest/Supertest testing.
+model: flash
 enable_write_tools: true
 enable_mcp_tools: false
 enable_subagent_tools: false
