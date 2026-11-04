@@ -10,7 +10,12 @@ import {
 } from '@angular/forms';
 import { Navbar } from '../../../../shared/components/navbar/navbar';
 import { PollApi } from '../../services/poll-api';
-import { PollType } from '../../../../shared/types/Poll';
+import {
+  normalizePollTags,
+  POLL_CATEGORIES,
+  PollCategory,
+  PollType,
+} from '../../../../shared/types/Poll';
 import { TuiCardLarge, TuiHeader } from '@taiga-ui/layout';
 import { TuiValidationError } from '@taiga-ui/cdk';
 import {
@@ -49,6 +54,7 @@ export class EditPoll implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  readonly categories = POLL_CATEGORIES;
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly errorMessage = signal<TuiValidationError | null>(null);
@@ -58,6 +64,8 @@ export class EditPoll implements OnInit {
 
   editForm = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    category: new FormControl<PollCategory>('Geral', { nonNullable: true }),
+    tagsInput: new FormControl('', { nonNullable: true }),
     options: new FormArray<FormControl<string>>([]),
     voteRequireLogin: new FormControl(false),
     allowMultiple: new FormControl(false),
@@ -91,6 +99,19 @@ export class EditPoll implements OnInit {
 
   get options(): FormArray<FormControl<string>> {
     return this.editForm.get('options') as FormArray<FormControl<string>>;
+  }
+
+  get parsedTags(): string[] {
+    return normalizePollTags(this.editForm.get('tagsInput')?.value ?? '');
+  }
+
+  selectCategory(category: PollCategory): void {
+    this.editForm.patchValue({ category });
+  }
+
+  removeTag(tagToRemove: string): void {
+    const remaining = this.parsedTags.filter((t) => t !== tagToRemove);
+    this.editForm.patchValue({ tagsInput: remaining.join(', ') });
   }
 
   addOption(): void {
@@ -131,6 +152,8 @@ export class EditPoll implements OnInit {
     this.pollApi
       .updatePoll(this.pollId, {
         title: raw.title.trim(),
+        category: raw.category ?? 'Geral',
+        tags: normalizePollTags(raw.tagsInput),
         options: trimmedOptions,
         voteRequireLogin: raw.voteRequireLogin ?? false,
         pollExpirationInDays: raw.pollExpirationInDays ?? undefined,
@@ -157,6 +180,8 @@ export class EditPoll implements OnInit {
   private prefillForm(poll: PollType): void {
     this.editForm.patchValue({
       title: poll.title,
+      category: poll.category ?? 'Geral',
+      tagsInput: (poll.tags ?? []).join(', '),
       voteRequireLogin: poll.voteRequireLogin,
       allowMultiple: poll.allowMultiple ?? false,
       maxChoices: poll.maxChoices ?? null,

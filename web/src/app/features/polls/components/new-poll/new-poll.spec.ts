@@ -130,4 +130,24 @@ describe('NewPoll', () => {
       }),
     );
   });
+
+  it('submits selected category and normalized tags when creating a poll', () => {
+    component.pollTitle = 'Qual framework frontend usar?';
+    (component as any).newPollForm.patchValue({
+      option1: 'Angular',
+      option2: 'React',
+    });
+    component.selectCategory('Tecnologia');
+    component.tagsInput = '#Angular, TypeScript, angular, #WebDev';
+
+    component.createPoll();
+
+    expect(pollApiMock.createPoll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Qual framework frontend usar?',
+        category: 'Tecnologia',
+        tags: ['angular', 'typescript', 'webdev'],
+      }),
+    );
+  });
 });

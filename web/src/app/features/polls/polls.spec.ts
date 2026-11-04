@@ -185,4 +185,62 @@ describe('Polls', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Enquete Ativa');
     expect(fixture.nativeElement.textContent).toContain('Enquete Encerrada');
   });
+
+  it('filters by category, search query, sort option, and tag click', async () => {
+    const component = fixture.componentInstance;
+    pollApi.getAllPolls.mockClear();
+
+    component.selectCategory('Tecnologia');
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(1, 10, {
+      category: 'Tecnologia',
+    });
+
+    pollApi.getAllPolls.mockClear();
+    component.onSearchChange('angular');
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(1, 10, {
+      category: 'Tecnologia',
+      search: 'angular',
+    });
+
+    pollApi.getAllPolls.mockClear();
+    component.selectSort('trending');
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(1, 10, {
+      category: 'Tecnologia',
+      search: 'angular',
+      sort: 'trending',
+    });
+
+    pollApi.getAllPolls.mockClear();
+    component.selectTag('#TypeScript');
+    expect(component.selectedTag()).toBe('typescript');
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(1, 10, {
+      category: 'Tecnologia',
+      search: 'angular',
+      sort: 'trending',
+      tag: 'typescript',
+    });
+  });
+
+  it('keeps discovery controls visible when an active filter returns 0 polls and allows clearing filters', async () => {
+    const component = fixture.componentInstance;
+
+    pollApi.getAllPolls.mockReturnValue(of([]));
+    component.selectCategory('Games');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('.discovery-controls')).toBeTruthy();
+    expect(el.textContent).toContain('Nenhuma enquete encontrada para o filtro selecionado');
+    expect(el.textContent).toContain('Limpar filtros');
+
+    pollApi.getAllPolls.mockClear();
+    pollApi.getAllPolls.mockReturnValue(of(mockPolls));
+    component.clearDiscoveryFilters();
+    fixture.detectChanges();
+
+    expect(component.selectedCategory()).toBeNull();
+    expect(pollApi.getAllPolls).toHaveBeenCalledWith(1, 10);
+  });
 });

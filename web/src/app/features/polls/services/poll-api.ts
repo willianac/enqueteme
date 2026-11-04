@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { PollType } from '../../../shared/types/Poll';
+import { PollCategory, PollSortOption, PollType } from '../../../shared/types/Poll';
 import {
   ExplainPollDebateRequest,
   ExplainPollDebateResponse,
@@ -21,9 +21,20 @@ export interface DuplicatePollCheckResult {
   } | null;
 }
 
+export interface PollDiscoveryParams {
+  page?: number;
+  limit?: number;
+  category?: PollCategory | null;
+  tag?: string | null;
+  search?: string | null;
+  sort?: PollSortOption;
+}
+
 type CreatePollResponse = {
   pollId: string;
   title: string;
+  category?: PollCategory;
+  tags?: string[];
   options: string[];
   createdAt: string;
   updatedAt: string;
@@ -33,6 +44,8 @@ type CreatePollResponse = {
 export type CreatePollRequest = {
   title: string;
   options: string[];
+  category?: PollCategory;
+  tags?: string[];
   voteRequireLogin?: boolean;
   durationDays?: number;
   allowMultiple?: boolean;
@@ -47,6 +60,8 @@ export type SetVoteRequest = {
 export type UpdatePollRequest = {
   title: string;
   options: string[];
+  category?: PollCategory;
+  tags?: string[];
   voteRequireLogin?: boolean;
   pollExpirationInDays?: number;
   allowMultiple?: boolean;
@@ -69,11 +84,35 @@ export class PollApi {
       pollExpirationInDays: createPollRequest.durationDays,
       allowMultiple: createPollRequest.allowMultiple,
       maxChoices: createPollRequest.maxChoices,
+      ...(createPollRequest.category !== undefined ? { category: createPollRequest.category } : {}),
+      ...(createPollRequest.tags !== undefined ? { tags: createPollRequest.tags } : {}),
     });
   }
 
-  public getAllPolls(page = 1, limit = 10) {
-    return this.http.get<PollType[]>(`${this.apiUrl}polls?page=${page}&limit=${limit}`);
+  public getAllPolls(
+    page = 1,
+    limit = 10,
+    filters?: Omit<PollDiscoveryParams, 'page' | 'limit'>,
+  ) {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (filters?.category) {
+      params.set('category', filters.category);
+    }
+    const normalizedTag = filters?.tag?.trim().replace(/^#+/, '').toLowerCase();
+    if (normalizedTag) {
+      params.set('tag', normalizedTag);
+    }
+    const trimmedSearch = filters?.search?.trim();
+    if (trimmedSearch) {
+      params.set('search', trimmedSearch);
+    }
+    if (filters?.sort && filters.sort !== 'newest') {
+      params.set('sort', filters.sort);
+    }
+    return this.http.get<PollType[]>(`${this.apiUrl}polls?${params.toString()}`);
   }
 
   public getPoll(id: number) {

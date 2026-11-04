@@ -40,6 +40,53 @@
             </button>
           </div>
 
+          <div class="taxonomy-block">
+            <div class="category-group">
+              <span class="text-muted">Categoria</span>
+              <div class="category-selector-chips" role="group" aria-label="Categoria da enquete">
+                @for (cat of categories; track cat) {
+                  <button
+                    type="button"
+                    class="category-chip-btn"
+                    [class.active]="editForm.get('category')?.value === cat"
+                    (click)="selectCategory(cat)"
+                  >
+                    {{ cat }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="tags-group">
+              <span class="text-muted">Tags (até 5, separadas por vírgula)</span>
+              <tui-textfield tuiTextfieldSize="m">
+                <input
+                  tuiTextfield
+                  formControlName="tagsInput"
+                  placeholder="Ex: angular, typescript, frontend"
+                />
+              </tui-textfield>
+              @if (parsedTags.length > 0) {
+                <div class="parsed-tags-list">
+                  @for (tag of parsedTags; track tag) {
+                    <span class="parsed-tag-chip">
+                      #{{ tag }}
+                      <button
+                        type="button"
+                        class="remove-tag-btn"
+                        (click)="removeTag(tag)"
+                        title="Remover tag"
+                        aria-label="Remover tag"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
           <div class="settings-row">
             <label tuiLabel class="switch-label">
               Exigir login para votar

@@ -10,6 +10,9 @@
         <small class="creator-name">{{pollData.creatorName}}</small>
       </div>
       <div class="badges">
+        @if (pollData.category) {
+          <tui-chip size="xs" appearance="outline" class="category-chip">{{ pollData.category }}</tui-chip>
+        }
         @if (pollData.voteRequireLogin && !isExpired && !voted) {
           <tui-chip size="xs" appearance="secondary">Requer login</tui-chip>
         }
@@ -29,6 +32,20 @@
         <small class="selection-rule">{{ selectionRuleText }}</small>
       }
     </h2>
+    @if (pollData.tags?.length) {
+      <div class="poll-tags">
+        @for (tag of pollData.tags; track tag) {
+          <tui-chip
+            size="xs"
+            appearance="neutral"
+            class="tag-chip"
+            (click)="onTagClick(tag, $event)"
+          >
+            #{{ tag }}
+          </tui-chip>
+        }
+      </div>
+    }
   </header>
 
   @if(!voted && !isExpired) {

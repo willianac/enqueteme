@@ -245,6 +245,90 @@
       margin-top: 0.25rem;
     }
   }
+
+  .taxonomy-section {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+
+    .category-selector-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      .category-chip-btn {
+        border: 1px solid var(--tui-border-normal);
+        background: var(--tui-background-neutral-1);
+        color: var(--tui-text-secondary);
+        border-radius: 999px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+
+        &:hover {
+          border-color: var(--tui-background-accent-2);
+          color: var(--tui-text-primary);
+        }
+
+        &.active {
+          background: var(--tui-background-accent-1, rgba(82, 102, 237, 0.12));
+          border-color: var(--tui-background-accent-2);
+          color: var(--tui-background-accent-2);
+          font-weight: 600;
+        }
+      }
+    }
+
+    .tags-group {
+      display: flex;
+      flex-direction: column;
+
+      .tags-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+
+        .tags-hint {
+          font-size: 0.75rem;
+          color: var(--tui-text-secondary);
+        }
+      }
+
+      .parsed-tags-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+
+        .parsed-tag-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.2rem 0.65rem;
+          border-radius: 999px;
+          background: var(--tui-background-neutral-1);
+          border: 1px solid var(--tui-border-normal);
+          font-size: 0.78rem;
+          color: var(--tui-text-primary);
+
+          .remove-tag-btn {
+            border: none;
+            background: transparent;
+            color: var(--tui-text-secondary);
+            font-size: 0.95rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+          }
+        }
+      }
+    }
+  }
   
   .poll-settings {
     margin-top: 1.8rem;

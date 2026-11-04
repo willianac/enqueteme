@@ -24,6 +24,7 @@ import { CreateVotoDto } from './create-voto.dto';
 import { EnquetesService } from './enquetes.service';
 import { EnquetesSimilarityService } from './enquetes-similarity.service';
 import { CheckDuplicateQueryDto } from './check-duplicate-query.dto';
+import { FindEnquetesQueryDto } from './find-enquetes-query.dto';
 import { UpdateEnqueteDto } from './update-enquete.dto';
 
 @Controller('polls')
@@ -36,17 +37,14 @@ export class EnquetesController {
 
   @Get()
   async findAll(
-    @Query('page') page: string,
-    @Query('limit') limit: string,
+    @Query() query: FindEnquetesQueryDto,
     @Res({ passthrough: true }) response: { status(code: number): unknown },
     @Req() request: Request,
   ) {
     const user = await this.auth.resolveSession(
       request.cookies?.[SESSION_COOKIE] as string | undefined,
     );
-    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
-    const parsedLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
-    const enquetes = await this.enquetesService.findAll(user, parsedPage, parsedLimit);
+    const enquetes = await this.enquetesService.findAll(user, query);
 
     if (enquetes.length === 0) {
       response.status(204);

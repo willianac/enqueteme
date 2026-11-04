@@ -19,6 +19,8 @@ describe('EditPoll', () => {
   const mockPoll: PollType = {
     id: 10,
     title: 'Enquete original',
+    category: 'Design',
+    tags: ['ux', 'ui'],
     creatorName: 'Will',
     expirationDate: '2099-12-31T23:59:59.000Z',
     voteRequireLogin: true,
@@ -71,6 +73,9 @@ describe('EditPoll', () => {
 
     const component = fixture.componentInstance;
     expect(component.editForm.get('title')?.value).toBe('Enquete original');
+    expect(component.editForm.get('category')?.value).toBe('Design');
+    expect(component.editForm.get('tagsInput')?.value).toBe('ux, ui');
+    expect(component.parsedTags).toEqual(['ux', 'ui']);
     expect(component.options.length).toBe(2);
     expect(component.editForm.get('voteRequireLogin')?.value).toBe(true);
     expect(component.editForm.get('allowMultiple')?.value).toBe(true);
@@ -134,6 +139,8 @@ describe('EditPoll', () => {
 
     const component = fixture.componentInstance;
     component.editForm.get('title')?.setValue('Novo título');
+    component.selectCategory('Tecnologia');
+    component.editForm.get('tagsInput')?.setValue('#Angular, TypeScript, angular');
     component.onSubmit();
     await fixture.whenStable();
 
@@ -141,6 +148,8 @@ describe('EditPoll', () => {
       10,
       expect.objectContaining({
         title: 'Novo título',
+        category: 'Tecnologia',
+        tags: ['angular', 'typescript'],
         allowMultiple: true,
         maxChoices: 2,
       }),

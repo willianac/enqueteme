@@ -7,7 +7,7 @@
       <p>Não foi possível carregar as enquetes.</p>
       <button tuiButton appearance="primary" size="m" (click)="loadPolls()">Tentar novamente</button>
     </div>
-  } @else if (polls().length === 0) {
+  } @else if (polls().length === 0 && !hasActiveDiscoveryFilters()) {
     <div class="state-message empty-state">
       <p>Nenhuma enquete encontrada.</p>
       <button tuiButton appearance="primary" size="m" routerLink="/new-poll">Criar enquete</button>
@@ -32,14 +32,104 @@
       </tui-segmented>
     </div>
 
+    <section class="discovery-controls" aria-label="Filtros de descoberta">
+      <div class="discovery-top-row">
+        <div class="search-box">
+          <tui-icon icon="@tui.search" class="search-icon" />
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Buscar enquetes por palavra-chave..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+            aria-label="Buscar enquetes por palavra-chave"
+          />
+          @if (searchQuery()) {
+            <button
+              type="button"
+              class="search-clear-btn"
+              (click)="clearSearch()"
+              title="Limpar busca"
+              aria-label="Limpar busca"
+            >
+              ×
+            </button>
+          }
+        </div>
+
+        <div class="sort-tabs" role="group" aria-label="Ordenar enquetes">
+          @for (sortOpt of sortOptions; track sortOpt.value) {
+            <button
+              type="button"
+              class="sort-tab-btn"
+              [class.active]="selectedSort() === sortOpt.value"
+              (click)="selectSort(sortOpt.value)"
+            >
+              {{ sortOpt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="category-chips-row" role="group" aria-label="Filtrar por categoria">
+        <button
+          type="button"
+          class="category-filter-chip"
+          [class.active]="selectedCategory() === null"
+          (click)="selectCategory(null)"
+        >
+          Todas as categorias
+        </button>
+        @for (cat of categories; track cat) {
+          <button
+            type="button"
+            class="category-filter-chip"
+            [class.active]="selectedCategory() === cat"
+            (click)="selectCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+
+      @if (selectedTag()) {
+        <div class="active-tag-row">
+          <span class="active-tag-label text-muted">Filtrando pela tag:</span>
+          <span class="active-tag-pill">
+            #{{ selectedTag() }}
+            <button
+              type="button"
+              class="clear-tag-btn"
+              (click)="selectTag(null)"
+              title="Remover filtro de tag"
+              aria-label="Remover filtro de tag"
+            >
+              ×
+            </button>
+          </span>
+        </div>
+      }
+    </section>
+
     @if (filteredPolls().length === 0) {
       <div class="state-message empty-filter-state">
         <p>Nenhuma enquete encontrada para o filtro selecionado.</p>
+        @if (hasActiveDiscoveryFilters()) {
+          <button
+            tuiButton
+            appearance="secondary"
+            size="s"
+            type="button"
+            (click)="clearDiscoveryFilters()"
+          >
+            Limpar filtros
+          </button>
+        }
       </div>
     } @else {
       <div class="poll-list">
         @for (poll of filteredPolls(); track poll.id) {
-          <app-poll [pollData]="poll"></app-poll>
+          <app-poll [pollData]="poll" (tagClick)="selectTag($event)"></app-poll>
         }
       </div>
     }

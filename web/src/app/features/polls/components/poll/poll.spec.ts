@@ -320,4 +320,36 @@ describe('Poll', () => {
     expect(chosenOptions[0].textContent).toContain('Option 1');
     expect(chosenOptions[1].textContent).toContain('Option 3');
   });
+
+  it('renders category badge and tag chips and emits tagClick when a tag is clicked', () => {
+    fixture.componentRef.setInput('pollData', {
+      id: 12,
+      title: 'Frontend Poll',
+      category: 'Tecnologia',
+      tags: ['angular', 'typescript'],
+      creatorName: 'Will',
+      expirationDate: '2030-08-25T12:00:00.000Z',
+      voteRequireLogin: false,
+      options: [
+        { id: 1, name: 'A', votes: 0 },
+        { id: 2, name: 'B', votes: 0 },
+      ],
+    });
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const categoryChip = el.querySelector('.category-chip');
+    expect(categoryChip?.textContent).toContain('Tecnologia');
+
+    const tagChips = el.querySelectorAll('.tag-chip');
+    expect(tagChips.length).toBe(2);
+    expect(tagChips[0].textContent).toContain('#angular');
+    expect(tagChips[1].textContent).toContain('#typescript');
+
+    const emittedTags: string[] = [];
+    fixture.componentInstance.tagClick.subscribe((t) => emittedTags.push(t));
+
+    (tagChips[0] as HTMLElement).click();
+    expect(emittedTags).toEqual(['angular']);
+  });
 });

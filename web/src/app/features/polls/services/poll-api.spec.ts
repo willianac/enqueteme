@@ -89,4 +89,71 @@ describe('PollApi', () => {
       poll: null,
     });
   });
+
+  it('requests /api/polls?page=1&limit=10 when no discovery filters are active', () => {
+    service.getAllPolls(1, 10).subscribe();
+    const req = http.expectOne('/api/polls?page=1&limit=10');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('appends category, normalized tag, search, and sort query params in getAllPolls', () => {
+    service
+      .getAllPolls(2, 10, {
+        category: 'Tecnologia',
+        tag: ' #Angular ',
+        search: ' framework ',
+        sort: 'trending',
+      })
+      .subscribe();
+
+    const req = http.expectOne(
+      '/api/polls?page=2&limit=10&category=Tecnologia&tag=angular&search=framework&sort=trending',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('includes category and tags in createPoll and updatePoll', () => {
+    service
+      .createPoll({
+        title: 'Qual stack?',
+        options: ['Angular', 'React'],
+        category: 'Tecnologia',
+        tags: ['angular', 'frontend'],
+        voteRequireLogin: true,
+        durationDays: 5,
+      })
+      .subscribe();
+
+    const create = http.expectOne('/api/polls');
+    expect(create.request.body).toEqual({
+      title: 'Qual stack?',
+      options: ['Angular', 'React'],
+      category: 'Tecnologia',
+      tags: ['angular', 'frontend'],
+      voteRequireLogin: true,
+      pollExpirationInDays: 5,
+    });
+    create.flush({});
+
+    service
+      .updatePoll(10, {
+        title: 'Qual stack atualizado?',
+        options: ['Angular', 'React'],
+        category: 'Design',
+        tags: ['ui', 'ux'],
+      })
+      .subscribe();
+
+    const update = http.expectOne('/api/polls/10');
+    expect(update.request.method).toBe('PATCH');
+    expect(update.request.body).toEqual({
+      title: 'Qual stack atualizado?',
+      options: ['Angular', 'React'],
+      category: 'Design',
+      tags: ['ui', 'ux'],
+    });
+    update.flush({});
+  });
 });

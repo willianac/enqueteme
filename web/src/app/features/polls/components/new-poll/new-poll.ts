@@ -18,6 +18,11 @@ import { TuiButtonClose, TuiSlider, TuiSwitch, TuiTabs } from '@taiga-ui/kit';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DuplicatePollCheckResult, PollApi } from '../../services/poll-api';
+import {
+  normalizePollTags,
+  POLL_CATEGORIES,
+  PollCategory,
+} from '../../../../shared/types/Poll';
 import { RouterLink } from '@angular/router';
 import { UserApi } from '../../../auth/services/user-api';
 import { NeutralityInspector } from '../neutrality-inspector/neutrality-inspector';
@@ -91,6 +96,11 @@ export class NewPoll implements OnInit {
 
   readonly duplicateMatch = signal<DuplicatePollCheckResult['poll'] | null>(null);
   readonly dismissedDuplicate = signal(false);
+
+  protected readonly categories = POLL_CATEGORIES;
+  public category: PollCategory = 'Geral';
+  public tags: string[] = [];
+  public tagsInput = '';
 
   protected pollDuration = 1;
   protected requireLogin = true;
@@ -348,6 +358,38 @@ export class NewPoll implements OnInit {
     );
   }
 
+  public selectCategory(cat: PollCategory): void {
+    this.category = cat;
+  }
+
+  public addTag(rawTag?: string): void {
+    const source = rawTag !== undefined ? rawTag : this.tagsInput;
+    this.tags = normalizePollTags([...this.tags, source]);
+    if (rawTag === undefined) {
+      this.tagsInput = '';
+    }
+  }
+
+  public onTagInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addTag();
+    }
+  }
+
+  public removeTag(tagToRemove: string): void {
+    this.tags = this.tags.filter((t) => t !== tagToRemove);
+    if (this.tagsInput.trim()) {
+      this.tagsInput = normalizePollTags(this.tagsInput)
+        .filter((t) => t !== tagToRemove)
+        .join(', ');
+    }
+  }
+
+  public getParsedTags(): string[] {
+    return normalizePollTags([...this.tags, ...normalizePollTags(this.tagsInput)]);
+  }
+
   public createPoll() {
     if (!this.userApi.user()) {
       this.alerts
@@ -365,10 +407,13 @@ export class NewPoll implements OnInit {
     this.cannotCreatePollError = null;
     const options = this.newPollForm.getRawValue();
     const title = this.pollTitle;
+    const parsedTags = this.getParsedTags();
     this.pollApi
       .createPoll({
         title,
         options: Object.values(options),
+        category: this.category,
+        tags: parsedTags,
         voteRequireLogin: this.requireLogin,
         durationDays: this.pollDuration,
         allowMultiple: this.allowMultiple,

@@ -13,6 +13,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { toSafeNumber } from '../prisma/to-safe-number';
 import { CreateEnqueteDto } from './create-enquete.dto';
 import { CreateVotoDto } from './create-voto.dto';
+import { FindEnquetesQueryDto } from './find-enquetes-query.dto';
+import {
+  normalizeTag,
+  normalizeTags,
+  PollCategory,
+} from './poll-categories';
 import { UpdateEnqueteDto } from './update-enquete.dto';
 import { EnquetesSimilarityService } from './enquetes-similarity.service';
 
@@ -27,12 +33,79 @@ export class EnquetesService {
     private readonly similarityService: EnquetesSimilarityService,
   ) {}
 
-  async findAll(usuario: AuthenticatedUser | null, page = 1, limit = 10) {
+  async findAll(
+    usuario: AuthenticatedUser | null,
+    pageOrQuery: number | FindEnquetesQueryDto = 1,
+    limitArg = 10,
+  ) {
+    const query: FindEnquetesQueryDto =
+      typeof pageOrQuery === 'number'
+        ? { page: pageOrQuery, limit: limitArg }
+        : (pageOrQuery ?? {});
+
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(50, Math.max(1, query.limit ?? 10));
     const skip = (page - 1) * limit;
+
+    const where: Prisma.EnqueteWhereInput = {};
+    let hasWhere = false;
+
+    if (query.category) {
+      where.category = query.category;
+      hasWhere = true;
+    }
+
+    const normalizedTag = query.tag ? normalizeTag(query.tag) : undefined;
+    if (normalizedTag) {
+      where.tags = { array_contains: normalizedTag };
+      hasWhere = true;
+    }
+
+    const trimmedSearch = query.search?.trim();
+    if (trimmedSearch) {
+      where.OR = [
+        { title: { contains: trimmedSearch } },
+        { opcoes: { some: { name: { contains: trimmedSearch } } } },
+      ];
+      hasWhere = true;
+    }
+
+    const sort = query.sort ?? 'newest';
+    if (
+      sort === 'ending_soon' ||
+      sort === 'trending' ||
+      query.status === 'active'
+    ) {
+      where.expirationDate = { gt: new Date() };
+      hasWhere = true;
+    } else if (query.status === 'expired') {
+      where.expirationDate = { lte: new Date() };
+      hasWhere = true;
+    }
+
+    let orderBy:
+      | Prisma.EnqueteOrderByWithRelationInput
+      | Prisma.EnqueteOrderByWithRelationInput[];
+
+    switch (sort) {
+      case 'most_voted':
+      case 'trending':
+        orderBy = [{ totalVoters: 'desc' }, { createdAt: 'desc' }];
+        break;
+      case 'ending_soon':
+        orderBy = { expirationDate: 'asc' };
+        break;
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+
     const enquetes = await this.prisma.enquete.findMany({
+      ...(hasWhere ? { where } : {}),
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include: {
         usuario: true,
         opcoes: true,
@@ -45,7 +118,9 @@ export class EnquetesService {
       },
     });
 
-    return enquetes.map((enquete) => this.toResponse(enquete as EnqueteCompleta));
+    return enquetes.map((enquete) =>
+      this.toResponse(enquete as EnqueteCompleta),
+    );
   }
 
   async findMine(usuario: AuthenticatedUser) {
@@ -157,6 +232,8 @@ export class EnquetesService {
       expirationDate?: Date;
       allowMultiple?: boolean;
       maxChoices?: number | null;
+      category?: PollCategory;
+      tags?: string[];
     } = {
       title: body.title,
       updatedAt: now,
@@ -177,6 +254,14 @@ export class EnquetesService {
     if (body.allowMultiple !== undefined || body.maxChoices !== undefined) {
       updateData.allowMultiple = allowMultiple;
       updateData.maxChoices = maxChoices;
+    }
+
+    if (body.category !== undefined) {
+      updateData.category = body.category;
+    }
+
+    if (body.tags !== undefined) {
+      updateData.tags = normalizeTags(body.tags);
     }
 
     const result = await this.prisma.$transaction(async (transaction) => {
@@ -248,9 +333,14 @@ export class EnquetesService {
       expirationDate.getUTCDate() + (body.pollExpirationInDays ?? 7),
     );
 
+    const category: PollCategory = body.category ?? 'Geral';
+    const tags: string[] = body.tags ? normalizeTags(body.tags) : [];
+
     const enquete = await this.prisma.enquete.create({
       data: {
         title: body.title,
+        category,
+        tags,
         createdAt: now,
         updatedAt: now,
         voteRequireLogin: body.voteRequireLogin ?? false,
@@ -277,6 +367,8 @@ export class EnquetesService {
     return {
       id: pollId,
       title: enquete.title,
+      category: (enquete.category as PollCategory) ?? category,
+      tags: Array.isArray(enquete.tags) ? (enquete.tags as string[]) : tags,
       createdAt: enquete.createdAt,
       updatedAt: enquete.updatedAt,
       voteRequireLogin: enquete.voteRequireLogin,
@@ -417,6 +509,8 @@ export class EnquetesService {
     return {
       id: toSafeNumber(enquete.id),
       title: enquete.title,
+      category: (enquete.category as PollCategory) ?? 'Geral',
+      tags: Array.isArray(enquete.tags) ? (enquete.tags as string[]) : [],
       creatorName: enquete.usuario.name,
       expirationDate: enquete.expirationDate,
       voteRequireLogin: enquete.voteRequireLogin,

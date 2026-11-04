@@ -1,5 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, DestroyRef, inject, Input, OnChanges } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  inject,
+  Input,
+  OnChanges,
+  Output,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TuiPlatform } from '@taiga-ui/cdk';
 import { TuiAlertService, TuiButton, TuiIcon } from '@taiga-ui/core';
@@ -64,6 +73,12 @@ export class Poll implements OnChanges {
   readonly destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) pollData!: PollType;
+  @Output() readonly tagClick = new EventEmitter<string>();
+
+  onTagClick(tag: string, event?: Event): void {
+    event?.stopPropagation();
+    this.tagClick.emit(tag);
+  }
 
   daysRemaining = 0;
   totalVotes = 0;

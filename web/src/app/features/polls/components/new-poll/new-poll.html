@@ -210,6 +210,58 @@
               (addOption)="onAddSuggestedOption($event)"
             />
 
+            <div class="taxonomy-section">
+              <div class="category-group">
+                <span class="field-label">Categoria</span>
+                <div class="category-selector-chips" role="group" aria-label="Categoria da enquete">
+                  @for (cat of categories; track cat) {
+                    <button
+                      type="button"
+                      class="category-chip-btn"
+                      [class.active]="category === cat"
+                      (click)="selectCategory(cat)"
+                    >
+                      {{ cat }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="tags-group">
+                <div class="tags-header">
+                  <label class="field-label" for="poll-tags-input">Tags (opcional)</label>
+                  <small class="tags-hint text-muted">Até 5 tags separadas por vírgula ou Enter</small>
+                </div>
+                <tui-textfield tuiTextfieldSize="m">
+                  <input
+                    id="poll-tags-input"
+                    tuiTextfield
+                    placeholder="Ex: angular, typescript, frontend"
+                    [(ngModel)]="tagsInput"
+                    (keydown)="onTagInputKeydown($event)"
+                  />
+                </tui-textfield>
+                @if (getParsedTags().length > 0) {
+                  <div class="parsed-tags-list">
+                    @for (tag of getParsedTags(); track tag) {
+                      <span class="parsed-tag-chip">
+                        #{{ tag }}
+                        <button
+                          type="button"
+                          class="remove-tag-btn"
+                          (click)="removeTag(tag)"
+                          title="Remover tag"
+                          aria-label="Remover tag"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
             <div class="poll-settings">
               <div class="left">
                 <label class="field-label">Duração da enquete (em dias)</label>

@@ -42,6 +42,8 @@ describe('Enquetes API', () => {
   const enquete = {
     id: 10n,
     title: 'Melhor framework?',
+    category: 'Geral',
+    tags: [],
     createdAt: new Date('2026-08-11T12:00:00.000Z'),
     updatedAt: new Date('2026-08-11T12:00:00.000Z'),
     voteRequireLogin: false,
@@ -103,6 +105,8 @@ describe('Enquetes API', () => {
         {
           id: 10,
           title: 'Melhor framework?',
+          category: 'Geral',
+          tags: [],
           creatorName: 'Will',
           expirationDate: '2030-08-25T12:00:00.000Z',
           voteRequireLogin: false,
@@ -162,6 +166,8 @@ describe('Enquetes API', () => {
         expect(response.body).toEqual({
           id: 10,
           title: 'Melhor framework?',
+          category: 'Geral',
+          tags: [],
           creatorName: 'Will',
           expirationDate: '2030-08-25T12:00:00.000Z',
           voteRequireLogin: false,
@@ -978,6 +984,228 @@ describe('Enquetes API', () => {
         '/polls/check-duplicate?title=Valid%20Title',
       );
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe('Categories, Tags, and Discovery', () => {
+    it('creates a poll with category and normalized deduplicated tags', async () => {
+      prisma.enquete.create.mockResolvedValue({
+        ...enquete,
+        category: 'Tecnologia',
+        tags: ['angular', 'nestjs', 'typescript'],
+      });
+
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Qual stack usar em 2026?',
+          options: ['Angular + NestJS', 'React + Express'],
+          category: 'Tecnologia',
+          tags: [' #Angular ', 'angular', '#NestJS', 'TypeScript '],
+        })
+        .expect(201)
+        .expect((response) => {
+          expect(response.body.category).toBe('Tecnologia');
+          expect(response.body.tags).toEqual([
+            'angular',
+            'nestjs',
+            'typescript',
+          ]);
+        });
+
+      expect(prisma.enquete.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            category: 'Tecnologia',
+            tags: ['angular', 'nestjs', 'typescript'],
+          }),
+        }),
+      );
+    });
+
+    it('defaults category to Geral and tags to empty array when omitted on creation', async () => {
+      prisma.enquete.create.mockResolvedValue(enquete);
+
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Enquete sem categoria explicita',
+          options: ['Opcao 1', 'Opcao 2'],
+        })
+        .expect(201)
+        .expect((response) => {
+          expect(response.body.category).toBe('Geral');
+          expect(response.body.tags).toEqual([]);
+        });
+
+      expect(prisma.enquete.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            category: 'Geral',
+            tags: [],
+          }),
+        }),
+      );
+    });
+
+    it('rejects poll creation with an invalid category', async () => {
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Categoria invalida',
+          options: ['A', 'B'],
+          category: 'Inexistente',
+        })
+        .expect(400);
+    });
+
+    it('rejects poll creation with more than 5 unique tags or invalid tag lengths', async () => {
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Muitas tags',
+          options: ['A', 'B'],
+          tags: ['um', 'dois', 'tres', 'quatro', 'cinco', 'seis'],
+        })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Tag muito curta',
+          options: ['A', 'B'],
+          tags: ['#a'],
+        })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .post('/polls')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Tag muito longa',
+          options: ['A', 'B'],
+          tags: ['a'.repeat(25)],
+        })
+        .expect(400);
+    });
+
+    it('updates category and tags on PATCH /polls/:id', async () => {
+      prisma.enquete.findUnique.mockResolvedValue(enquete);
+      prisma.voto.count.mockResolvedValue(0);
+      prisma.opcao.deleteMany.mockResolvedValue({ count: 2 });
+      prisma.enquete.update.mockResolvedValue({
+        ...enquete,
+        category: 'Design',
+        tags: ['ui', 'ux'],
+      });
+
+      await request(app.getHttpServer())
+        .patch('/polls/10')
+        .set('Cookie', 'enqueteme_session=valid-token')
+        .send({
+          title: 'Melhor sistema de design?',
+          options: ['Taiga UI', 'Material'],
+          category: 'Design',
+          tags: ['#UI', 'ux', 'ui'],
+        })
+        .expect(200)
+        .expect((response) => {
+          expect(response.body.category).toBe('Design');
+          expect(response.body.tags).toEqual(['ui', 'ux']);
+        });
+
+      expect(prisma.enquete.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            category: 'Design',
+            tags: ['ui', 'ux'],
+          }),
+        }),
+      );
+    });
+
+    it('filters GET /polls by category, tag, and search', async () => {
+      prisma.enquete.findMany.mockResolvedValue([
+        {
+          ...enquete,
+          category: 'Tecnologia',
+          tags: ['nestjs', 'backend'],
+        },
+      ]);
+
+      await request(app.getHttpServer())
+        .get('/polls?category=Tecnologia&tag=%23NestJS&search=framework')
+        .expect(200)
+        .expect((response) => {
+          expect(response.body).toHaveLength(1);
+          expect(response.body[0].category).toBe('Tecnologia');
+          expect(response.body[0].tags).toEqual(['nestjs', 'backend']);
+        });
+
+      expect(prisma.enquete.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            category: 'Tecnologia',
+            tags: { array_contains: 'nestjs' },
+            OR: [
+              { title: { contains: 'framework' } },
+              { opcoes: { some: { name: { contains: 'framework' } } } },
+            ],
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
+
+    it('sorts GET /polls by most_voted, ending_soon, and trending', async () => {
+      prisma.enquete.findMany.mockResolvedValue([enquete]);
+
+      await request(app.getHttpServer())
+        .get('/polls?sort=most_voted')
+        .expect(200);
+
+      expect(prisma.enquete.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          orderBy: [{ totalVoters: 'desc' }, { createdAt: 'desc' }],
+        }),
+      );
+
+      await request(app.getHttpServer())
+        .get('/polls?sort=ending_soon')
+        .expect(200);
+
+      expect(prisma.enquete.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: { expirationDate: { gt: expect.any(Date) } },
+          orderBy: { expirationDate: 'asc' },
+        }),
+      );
+
+      await request(app.getHttpServer())
+        .get('/polls?sort=trending')
+        .expect(200);
+
+      expect(prisma.enquete.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: { expirationDate: { gt: expect.any(Date) } },
+          orderBy: [{ totalVoters: 'desc' }, { createdAt: 'desc' }],
+        }),
+      );
+    });
+
+    it('rejects invalid category or sort query param on GET /polls', async () => {
+      await request(app.getHttpServer())
+        .get('/polls?category=Invalida')
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .get('/polls?sort=random')
+        .expect(400);
     });
   });
 });
