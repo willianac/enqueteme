@@ -6,12 +6,12 @@ O **Enquete.me** é uma plataforma moderna para criação, votação e compartil
 
 ## ✨ Principais Funcionalidades
 
-- **🤖 Criação com auxílio e sugestões de IA:** Gere ideias de perguntas e opções de resposta automaticamente a partir de um tema ou rascunho.
-- **💡 Recurso "Explicar essa enquete":** A IA resume e contextualiza o assunto da enquete para quem está votando, facilitando decisões informadas sem precisar sair da página.
-- **☑️ Múltipla escolha e Escolha única:** Crie enquetes flexíveis onde o participante pode escolher apenas uma opção ou várias opções simultaneamente.
-- **🔗 Compartilhamento rápido:** Links diretos para divulgar suas enquetes com amigos, equipes ou comunidades e acompanhar os resultados instantaneamente.
-- **🔐 Autenticação com Google:** Login rápido e seguro via Google OAuth 2.0.
-- **🚀 *Em breve:*** Novas funcionalidades de engajamento, filtros avançados, expiração customizada e análises detalhadas de votos.
+- ** Criação com auxílio e sugestões de IA:** Gere ideias de perguntas e opções de resposta automaticamente a partir de um tema ou rascunho.
+- ** Recurso "Explicar essa enquete":** A IA resume e contextualiza o assunto da enquete para quem está votando, facilitando decisões informadas sem precisar sair da página.
+- ** Múltipla escolha e Escolha única:** Crie enquetes flexíveis onde o participante pode escolher apenas uma opção ou várias opções simultaneamente.
+- ** Compartilhamento rápido:** Links diretos para divulgar suas enquetes com amigos, equipes ou comunidades e acompanhar os resultados instantaneamente.
+- ** Autenticação com Google:** Login rápido e seguro via Google OAuth 2.0.
+- ** *Em breve:*** Novas funcionalidades de engajamento, filtros avançados, expiração customizada, enquetes com imagens e análises detalhadas de votos.
 
 ---
 
@@ -39,23 +39,6 @@ O projeto é estruturado em um repositório unificado dividindo o **Backend (`ap
 
 ---
 
-## 📁 Estrutura do Repositório
-
-```text
-enqueteme/
-├── api/                  # Backend NestJS 11 + Prisma ORM
-│   ├── prisma/           # Schema do banco de dados e migrações
-│   ├── src/              # Módulos de domínio (enquete, auth, ai, usuario, etc.)
-│   └── test/             # Testes E2E com Jest e Supertest
-├── web/                  # Frontend Angular 21 + Taiga UI
-│   └── src/app/
-│       ├── features/     # Telas e fluxos principais da aplicação
-│       └── shared/       # Componentes, serviços e tipos compartilhados
-└── docker-compose.yml    # Orquestração dos containers (db, api, web)
-```
-
----
-
 ## 🚀 Como Executar o Projeto
 
 ### Pré-requisitos
@@ -66,7 +49,7 @@ enqueteme/
 
 ---
 
-### Opção 1: Rodando tudo com Docker Compose
+### Rodando tudo com Docker Compose
 
 1. Copie o arquivo de variáveis de ambiente na raiz do projeto:
    ```bash
@@ -78,35 +61,6 @@ enqueteme/
    docker compose up --build
    ```
 4. Acesse a aplicação em `http://localhost:4200` (API disponível em `http://localhost:8080`).
-
----
-
-### Opção 2: Ambiente de Desenvolvimento Local
-
-1. **Inicie o banco de dados MySQL via Docker:**
-   ```bash
-   docker compose up -d db
-   ```
-
-2. **Configure e inicie a API (`api/`):**
-   ```bash
-   cd api
-   npm ci
-   cp .env.example .env
-   # Adicione suas chaves GOOGLE_* e OPENROUTER_* no arquivo api/.env
-   npx prisma migrate deploy
-   npm run start:dev
-   ```
-   A API estará rodando em `http://localhost:8080`.
-
-3. **Configure e inicie o Frontend (`web/`):**
-   Em outro terminal:
-   ```bash
-   cd web
-   npm ci
-   npm start
-   ```
-   O servidor de desenvolvimento do Angular iniciará em `http://localhost:4200` (com proxy configurado para `/api`).
 
 ---
 
